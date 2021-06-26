@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/symbols/Identifier.java</file>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/compiler/Compiler.java</file>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/tokens/Token.java</file>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/Lexical/Analysis.java</file>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/tokens/Word.java</file>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/tokens/TagEnums.java</file>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/symbols/Env.java</file>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/tokens/Num.java</file>
+            <file>file:/media/cristiano/compartilhado/linux/projetos/cefet/compiler/src/Lexical/Reader.java</file>
+        </group>
+    </open-files>
+</project-private>
