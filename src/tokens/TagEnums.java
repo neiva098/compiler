@@ -28,6 +28,7 @@ public class TagEnums {
             DO = 269,
             IN = 270,
             OUT = 271,
+            
             //Operadores e pontuação
             ASSIGN,
             EQ = 272,
