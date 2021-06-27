@@ -30,7 +30,7 @@ public class TagEnums {
             OUT = 271,
             
             //Operadores e pontuação
-            ASSIGN,
+            
             EQ = 272,
             GE = 273,
             GT = 274,
@@ -43,21 +43,22 @@ public class TagEnums {
             DIV = 281,
             AND = 282,
             OR = 283,
-            NOT,
-            COMMA,
-            SEMICOLON,
-            COLON,
-            OPEN_BRA,
-            CLOSE_BRA,
-            DOT,
+            ASSIGN = 284,
+            NOT= 285,
+            COMMA= 286,
+            SEMICOLON= 287,
+            COLON= 288,
+            OPEN_BRA= 289,
+            CLOSE_BRA= 290,
+            DOT= 291,
             //Outros tokens
             
-            NUM = 284,
-            ID = 285,
-            STRING = 286,
-            CARACTERE = 287,
-            INVALID_TOKEN = 288,
-            END_OF_FILE = 289,
-            COMMENT = 291,
-            UNEXPECTED_EOF = 292;
+            NUM =292,
+            ID = 293,
+            STRING = 294,
+            CARACTERE = 295,
+            INVALID_TOKEN = 296,
+            END_OF_FILE = 297,
+            COMMENT = 298,
+            UNEXPECTED_EOF = 299;
 }
