@@ -18,7 +18,6 @@ import tokens.Word;
  * @author cristiano
  */
 public class Analysis {
-
     private int line = 1;
     private final Reader fileReader;
     private final Env st;
@@ -31,7 +30,11 @@ public class Analysis {
     }
 
     private void reserve(Word w) {
-        this.st.put(w.getLexeme(), w);
+        this.st.put(w.getString(), w);
+    }
+
+    public Env getSt() {
+        return this.st;
     }
 
     private void reservedWords() {
@@ -91,16 +94,16 @@ public class Analysis {
     }
 
     private static boolean isEOF(char ch) {
-        return isEOFANSI(ch) || ch == -1;
+        return isEOFANSI(ch) || ch == -1 || ch == 65535;
     }
 
     private Token handleNumbers(char ch) throws IOException {
         int value = 0;
 
         do {
-            value = 10 * value + Character.digit(ch, 10);
+            value = 10 * value + Character.digit(this.fileReader.getCh(), 10);
             this.fileReader.readCh();
-        } while (Character.isDigit(ch));
+        } while (Character.isDigit(this.fileReader.getCh()));
 
         return new Num(value);
     }
@@ -109,9 +112,10 @@ public class Analysis {
         StringBuffer sb = new StringBuffer();
 
         do {
-            sb.append(ch);
+            sb.append(this.fileReader.getCh());
+            
             this.fileReader.readCh();
-        } while (Character.isLetterOrDigit(ch));
+        } while (Character.isLetterOrDigit(this.fileReader.getCh()) ||  this.fileReader.getCh() == '_');
 
         String s = sb.toString();
         Word w = (Word) st.get(s);
@@ -154,8 +158,9 @@ public class Analysis {
         if (isBreakLine(ch))
             this.line++;
 
-        if (isEOF(ch))
-            throw new IOException("Unexpected EOF");
+        if (isEOF(ch)) {
+            return new Token(TagEnums.END_OF_FILE);
+        }
 
         if (ch == '&')
             return this.handleEComercial();
@@ -175,8 +180,18 @@ public class Analysis {
         if (Character.isLetter(ch))
             return this.handleIdentifiers((ch));
 
-        Token t = new Token(ch);
-        ch = ' ';
+        if (ch == '"')
+            return this.handleString();
+
+        Token t = st.get(String.valueOf(ch));
+        
+        if(t != null){
+            return t; 
+        } 
+        
+        t = new Token(ch);
+        st.put(String.valueOf(ch), t);          
+        
         return t;
     }
 
@@ -187,9 +202,30 @@ public class Analysis {
         return new Token('&');
     }
 
+    private Token handleString() throws IOException {
+        StringBuffer sb = new StringBuffer();
+
+        while (this.fileReader.readCh() != '"') {
+            if (Analysis.isEOF(this.fileReader.getCh())) this.imprimeErro(new Word(sb.toString(), TagEnums.UNEXPECTED_EOF));
+        
+            sb.append(this.fileReader.getCh());
+        }
+
+        String s = sb.toString();
+        Word w = (Word) st.get(s);
+
+        if (w != null)
+            return w;
+
+        w = new Word(s, TagEnums.STRING);
+        st.put(s, w);
+
+        return w;
+    }
+
     private Token handlePipe() throws IOException {
         if (this.fileReader.readCh('|'))
-            return new Word("|", TagEnums.OR);
+            return new Word("||", TagEnums.OR);
 
         return new Token('|');
     }
@@ -211,6 +247,9 @@ public class Analysis {
             while (true) {
                 char charInComment = fileReader.readCh();
 
+                if (isEOF(charInComment)) 
+                    throw new IOException("[" + this.line + "," + this.fileReader.getCharIndex() + "]" + ": Erro Léxico - fim do arquivo inesperado");
+
                 if (charInComment == '*' && this.fileReader.readCh('/'))
                     break;
             }
@@ -219,5 +258,9 @@ public class Analysis {
         }
 
         return new Token('/');
+    }
+
+    private void imprimeErro(Word w) throws IOException {
+        throw new IOException("[" + this.line + "," + this.fileReader.getCharIndex() + "]" + ": Erro Léxico - token inválido" + w.getString());
     }
 }
