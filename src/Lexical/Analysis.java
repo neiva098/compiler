@@ -268,6 +268,6 @@ public class Analysis {
     }
 
     private void imprimeErro(Word w) throws IOException {
-        throw new IOException("[" + this.line + "," + this.fileReader.getCharIndex() + "]" + ": Erro Léxico - token inválido" + w.toString());
+        throw new IOException("[" + this.line + "]" + ": Erro Léxico - token inválido -> " + w.toString());
     }
 }
