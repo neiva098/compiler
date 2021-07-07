@@ -155,8 +155,11 @@ public class Analysis {
         while (isIgnoredDelimiter(ch))
             ch = this.fileReader.readCh();
 
-        if (isBreakLine(ch))
+        while (isBreakLine(ch)) {
             this.line++;
+            ch = this.fileReader.readCh();
+        }
+
 
         if (isEOF(ch)) {
             return new Token(TagEnums.END_OF_FILE);
