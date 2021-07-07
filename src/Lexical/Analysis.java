@@ -30,7 +30,7 @@ public class Analysis {
     }
 
     private void reserve(Word w) {
-        this.st.put(w.getString(), w);
+        this.st.put(w.toString(), w);
     }
 
     public Env getSt() {
@@ -105,17 +105,21 @@ public class Analysis {
             this.fileReader.readCh();
         } while (Character.isDigit(this.fileReader.getCh()));
 
+        this.fileReader.unRead();
+
         return new Num(value);
     }
 
     private Token handleIdentifiers(char ch) throws IOException {
         StringBuffer sb = new StringBuffer();
 
-        do {
+        while (Character.isLetterOrDigit(this.fileReader.getCh()) ||  this.fileReader.getCh() == '_') {
             sb.append(this.fileReader.getCh());
             
             this.fileReader.readCh();
-        } while (Character.isLetterOrDigit(this.fileReader.getCh()) ||  this.fileReader.getCh() == '_');
+        }
+
+        this.fileReader.unRead();
 
         String s = sb.toString();
         Word w = (Word) st.get(s);
@@ -264,6 +268,6 @@ public class Analysis {
     }
 
     private void imprimeErro(Word w) throws IOException {
-        throw new IOException("[" + this.line + "," + this.fileReader.getCharIndex() + "]" + ": Erro Léxico - token inválido" + w.getString());
+        throw new IOException("[" + this.line + "," + this.fileReader.getCharIndex() + "]" + ": Erro Léxico - token inválido" + w.toString());
     }
 }

@@ -19,7 +19,7 @@ public class Word extends Token {
     }
 
 
-    public String getString() {
+    public String toString() {
         return lexeme;
     }
 }

@@ -26,4 +26,8 @@ public class Num extends Token {
         return value;
     }
 
+    public String toString() {
+        return "" + value;
+    }
+
 }

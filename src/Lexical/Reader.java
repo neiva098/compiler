@@ -61,6 +61,10 @@ public class Reader {
         return currentChar;
     }
 
+    public void unRead() throws IOException {
+        this.file.unread(this.getCh());
+    }
+
     public int getCharIndex() {
         return this.readedText.length() + 1;
     }

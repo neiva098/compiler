@@ -9,5 +9,5 @@ in (a);
 in (b);
 result = (a*b + 1);
 out ("Resultado: ");
-out (result)
+out (result);
 end
