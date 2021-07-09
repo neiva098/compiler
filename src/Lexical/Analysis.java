@@ -48,8 +48,8 @@ public class Analysis {
         this.reserve(new Word("else", TagEnums.ELSE)); 
         this.reserve(new Word("while", TagEnums.WHILE)); 
         this.reserve(new Word("do", TagEnums.DO)); 
-        this.reserve(new Word("read", TagEnums.IN)); 
-        this.reserve(new Word("write", TagEnums.OUT)); 
+        this.reserve(new Word("read", TagEnums.READ)); 
+        this.reserve(new Word("write", TagEnums.WRITE)); 
         this.reserve(new Word("=", TagEnums.ASSIGN)); 
         this.reserve(new Word("==", TagEnums.EQ)); 
         this.reserve(new Word("!=", TagEnums.NE)); 
@@ -68,21 +68,25 @@ public class Analysis {
         this.reserve(new Word(".", TagEnums.DOT)); 
         this.reserve(new Word(";", TagEnums.SEMICOLON)); 
         this.reserve(new Word(":", TagEnums.COLON)); 
-        this.reserve(new Word("(", TagEnums.OPEN_BRA)); 
-        this.reserve(new Word(")", TagEnums.CLOSE_BRA)); 
+        this.reserve(new Word("(", TagEnums.OPEN_PAR)); 
+        this.reserve(new Word(")", TagEnums.CLOSE_PAR)); 
+        this.reserve(new Word("{", TagEnums.OPEN_BRA)); 
+        this.reserve(new Word("}", TagEnums.CLOSE_BRA)); 
         this.reserve(new Word("", TagEnums.INVALID_TOKEN));
         this.reserve(new Word("", TagEnums.END_OF_FILE)); 
         this.reserve(new Word("", TagEnums.UNEXPECTED_EOF));
     }
 
     private static boolean isIgnoredDelimiter(char ch) {
-        String[] values = new String[] { " ", "\t", "\r", "\b" };
+        String[] values = new String[] { " ", "\t", "\r", "\b"};
+
 
         return Arrays.asList(values).contains(String.valueOf(ch));
     }
 
     private static boolean isBreakLine(char ch) {
-        return ch == '\n';
+        int intValueOfCh = ch;
+        return ch == '\n' || intValueOfCh == 10;
     }
 
     private static boolean isEOFANSI(char ch) {
@@ -152,14 +156,14 @@ public class Analysis {
     public Token scan() throws IOException {
         char ch = this.fileReader.readCh();
 
-        while (isIgnoredDelimiter(ch))
-            ch = this.fileReader.readCh();
+        if (isIgnoredDelimiter(ch))
+            return this.scan();
 
-        while (isBreakLine(ch)) {
+        if (isBreakLine(ch)) {
             this.line++;
-            ch = this.fileReader.readCh();
+            
+            return this.scan();
         }
-
 
         if (isEOF(ch)) {
             return new Token(TagEnums.END_OF_FILE);
@@ -243,7 +247,7 @@ public class Analysis {
                     break;
             }
 
-            return new Word("//", TagEnums.COMMENT);
+            return this.scan();
         }
 
         if (this.fileReader.readCh('*')) {
@@ -251,19 +255,23 @@ public class Analysis {
                 char charInComment = fileReader.readCh();
 
                 if (isEOF(charInComment)) 
-                    throw new IOException("[" + this.line + "," + this.fileReader.getCharIndex() + "]" + ": Erro Léxico - fim do arquivo inesperado");
+                    throw new IOException("[" + this.line + "]" + ": Erro Léxico - fim do arquivo inesperado");
 
                 if (charInComment == '*' && this.fileReader.readCh('/'))
                     break;
             }
 
-            return new Word("/*", TagEnums.COMMENT);
+            return this.scan();
         }
 
-        return new Token('/');
+        return new Word("/", TagEnums.DIV);
     }
 
     private void imprimeErro(Word w) throws IOException {
         throw new IOException("[" + this.line + "]" + ": Erro Léxico - token inválido -> " + w.toString());
+    }
+
+    public int getLines() {
+        return this.line;
     }
 }

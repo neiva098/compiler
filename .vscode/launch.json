@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Current File",
+            "request": "launch",
+            "mainClass": "${file}",
+            "args": "tests/test3.txt"
+        },
+        {
+            "type": "java",
+            "name": "Launch Compiler",
+            "request": "launch",
+            "mainClass": "compiler.Compiler",
+            "projectName": "compiler_aa0e2d1b",
+            "args": "tests/test3.txt"
+        }
+    ]
+}

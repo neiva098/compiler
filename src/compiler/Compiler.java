@@ -25,7 +25,6 @@ public class Compiler {
         
         try {
             Analysis la = new Analysis(new Reader(args[0]));
-            
             System.out.println("Sequência de caracteres TokenType\n");
 
             Token lex = la.scan();
@@ -36,10 +35,12 @@ public class Compiler {
                 System.out.println("Token: "+ lex.toString() +"\t"+lex.tag);
             }
 
+            System.out.println("\n\nNumero de linhas é: " + la.getLines() + "\n\n");
+            
             la.getSt().imprime();
         } catch (Exception e) {
             System.err.println(e.getMessage());
-        }      
+        }  
     }
     
 }

@@ -37,6 +37,6 @@ public class Env {
     }
 
     public void imprime() {
-        table.forEach((key,value) -> System.out.println("id: " + key + " = " + "padrão: " + value.toString() + "tag: " + value.tag));
+        table.forEach((key,value) -> System.out.println("id: " + key + " = " + "padrão: " + value.toString() + " tag: " + value.tag));
     }
 }

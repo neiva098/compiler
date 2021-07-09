@@ -11,7 +11,7 @@ package tokens;
  */
 public class TagEnums {
 
-    public static int //Palavras reservadas
+    public static int
             CLASS = 257,
             INIT = 258,
             STOP = 259,
@@ -22,8 +22,8 @@ public class TagEnums {
             ELSE = 265,
             WHILE = 268,
             DO = 269,
-            IN = 270,
-            OUT = 271,
+            READ = 270,
+            WRITE = 271,
             
             EQ = 272,
             GE = 273,
@@ -42,9 +42,11 @@ public class TagEnums {
             COMMA= 286,
             SEMICOLON= 287,
             COLON= 288,
-            OPEN_BRA= 289,
-            CLOSE_BRA= 290,
+            OPEN_PAR= 289,
+            CLOSE_PAR= 290,
             DOT= 291,
+            OPEN_BRA= 300,
+            CLOSE_BRA= 301,
             
             NUM =292,
             ID = 293,

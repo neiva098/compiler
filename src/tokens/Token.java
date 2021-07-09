@@ -11,13 +11,13 @@ package tokens;
  */
 public class Token {
 
-    public final int tag; //constante que representa o token
+    public final int tag;
 
     public Token(int t) {
         tag = t;
     }
 
     public String toString() {
-        return "" + tag;
+        return "" + (char)tag;
     }
 }
