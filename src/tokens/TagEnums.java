@@ -12,24 +12,18 @@ package tokens;
 public class TagEnums {
 
     public static int //Palavras reservadas
-            PROGRAM = 256,
-            DECLARE = 257,
-            BEGIN = 258,
-            END = 259,
+            CLASS = 257,
+            INIT = 258,
+            STOP = 259,
             INT = 260,
             FLOAT = 261,
-            CHAR = 262,
+            STRING_TYPE = 262,
             IF = 263,
-            THEN = 264,
             ELSE = 265,
-            REPEAT = 266,
-            UNTIL = 267,
             WHILE = 268,
             DO = 269,
             IN = 270,
             OUT = 271,
-            
-            //Operadores e pontuação
             
             EQ = 272,
             GE = 273,
@@ -51,11 +45,10 @@ public class TagEnums {
             OPEN_BRA= 289,
             CLOSE_BRA= 290,
             DOT= 291,
-            //Outros tokens
             
             NUM =292,
             ID = 293,
-            STRING = 294,
+            STRING_VALUE = 294,
             CARACTERE = 295,
             INVALID_TOKEN = 296,
             END_OF_FILE = 297,

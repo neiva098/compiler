@@ -38,44 +38,40 @@ public class Analysis {
     }
 
     private void reservedWords() {
-        this.reserve(new Word("program", TagEnums.PROGRAM));
-        this.reserve(new Word("declare", TagEnums.DECLARE));
-        this.reserve(new Word("begin", TagEnums.BEGIN));
-        this.reserve(new Word("end", TagEnums.END));
-        this.reserve(new Word("int", TagEnums.INT));
-        this.reserve(new Word("float", TagEnums.FLOAT));
-        this.reserve(new Word("char", TagEnums.CHAR));
-        this.reserve(new Word("if", TagEnums.IF));
-        this.reserve(new Word("then", TagEnums.THEN));
-        this.reserve(new Word("else", TagEnums.ELSE));
-        this.reserve(new Word("repeat", TagEnums.REPEAT));
-        this.reserve(new Word("until", TagEnums.UNTIL));
-        this.reserve(new Word("while", TagEnums.WHILE));
-        this.reserve(new Word("do", TagEnums.DO));
-        this.reserve(new Word("in", TagEnums.IN));
-        this.reserve(new Word("out", TagEnums.OUT));
-        this.reserve(new Word("=", TagEnums.ASSIGN));
-        this.reserve(new Word("==", TagEnums.EQ));
-        this.reserve(new Word("!=", TagEnums.NE));
-        this.reserve(new Word(">=", TagEnums.GE));
-        this.reserve(new Word(">", TagEnums.GT));
-        this.reserve(new Word("<=", TagEnums.LE));
-        this.reserve(new Word("<", TagEnums.LT));
-        this.reserve(new Word("+", TagEnums.ADD));
-        this.reserve(new Word("-", TagEnums.SUB));
-        this.reserve(new Word("*", TagEnums.MUL));
-        this.reserve(new Word("/", TagEnums.DIV));
-        this.reserve(new Word("&&", TagEnums.AND));
-        this.reserve(new Word("||", TagEnums.OR));
-        this.reserve(new Word("!", TagEnums.NOT));
-        this.reserve(new Word(",", TagEnums.COMMA));
-        this.reserve(new Word(".", TagEnums.DOT));
-        this.reserve(new Word(";", TagEnums.SEMICOLON));
-        this.reserve(new Word(":", TagEnums.COLON));
-        this.reserve(new Word("(", TagEnums.OPEN_BRA));
-        this.reserve(new Word(")", TagEnums.CLOSE_BRA));
+        this.reserve(new Word("class", TagEnums.CLASS)); 
+        this.reserve(new Word("init", TagEnums.INIT)); 
+        this.reserve(new Word("stop", TagEnums.STOP)); 
+        this.reserve(new Word("int", TagEnums.INT)); 
+        this.reserve(new Word("float", TagEnums.FLOAT)); 
+        this.reserve(new Word("string", TagEnums.STRING_TYPE)); 
+        this.reserve(new Word("if", TagEnums.IF)); 
+        this.reserve(new Word("else", TagEnums.ELSE)); 
+        this.reserve(new Word("while", TagEnums.WHILE)); 
+        this.reserve(new Word("do", TagEnums.DO)); 
+        this.reserve(new Word("read", TagEnums.IN)); 
+        this.reserve(new Word("write", TagEnums.OUT)); 
+        this.reserve(new Word("=", TagEnums.ASSIGN)); 
+        this.reserve(new Word("==", TagEnums.EQ)); 
+        this.reserve(new Word("!=", TagEnums.NE)); 
+        this.reserve(new Word(">=", TagEnums.GE)); 
+        this.reserve(new Word(">", TagEnums.GT)); 
+        this.reserve(new Word("<=", TagEnums.LE)); 
+        this.reserve(new Word("<", TagEnums.LT)); 
+        this.reserve(new Word("+", TagEnums.ADD)); 
+        this.reserve(new Word("-", TagEnums.SUB)); 
+        this.reserve(new Word("*", TagEnums.MUL)); 
+        this.reserve(new Word("/", TagEnums.DIV)); 
+        this.reserve(new Word("&&", TagEnums.AND)); 
+        this.reserve(new Word("||", TagEnums.OR)); 
+        this.reserve(new Word("!", TagEnums.NOT));  
+        this.reserve(new Word(",", TagEnums.COMMA));  
+        this.reserve(new Word(".", TagEnums.DOT)); 
+        this.reserve(new Word(";", TagEnums.SEMICOLON)); 
+        this.reserve(new Word(":", TagEnums.COLON)); 
+        this.reserve(new Word("(", TagEnums.OPEN_BRA)); 
+        this.reserve(new Word(")", TagEnums.CLOSE_BRA)); 
         this.reserve(new Word("", TagEnums.INVALID_TOKEN));
-        this.reserve(new Word("", TagEnums.END_OF_FILE));
+        this.reserve(new Word("", TagEnums.END_OF_FILE)); 
         this.reserve(new Word("", TagEnums.UNEXPECTED_EOF));
     }
 
@@ -224,7 +220,7 @@ public class Analysis {
         if (w != null)
             return w;
 
-        w = new Word(s, TagEnums.STRING);
+        w = new Word(s, TagEnums.STRING_VALUE);
         st.put(s, w);
 
         return w;
