@@ -1,0 +1,9 @@
+class MinhaClasse
+    string a, b, texto;
+        write("Digite primeira palavra");
+        read(a);
+        write("Digite segunda palavra");
+        read(b);
+        texto = a + " " + b;
+    write("O resultado é: ");
+    write(c);
