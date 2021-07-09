@@ -1,13 +1,13 @@
-program teste1
-declare
-a, b, result: int;
-x : float
-begin
-a = 12;
-x = 12.0;
-in (a);
-in (b);
-result = (a*b + 1);
-out ("Resultado: ");
-out (result);
-end
+class Teste1
+    int a,b,c;
+    float result;
+init
+    write("Digite o valor de a:");
+    read (a);
+    write("Digite o valor de c:");
+    read (c);
+    b = 10;
+    result = (a * c)/(b 5 - 345);
+    write("O resultado e: ");
+    write(result);
+stop
