@@ -26,6 +26,7 @@ public class Compiler {
             
             Sintatical.Analysis sa = new Sintatical.Analysis(la);
             sa.program();
+            
             System.out.println("Fim da análise"); 
         } catch (Exception e) {
             System.err.println(e.getMessage());

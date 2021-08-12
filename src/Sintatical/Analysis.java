@@ -111,7 +111,7 @@ public class Analysis {
         if (currentToken.tag != TagEnums.INIT) {
             System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
             + this.currentToken.toString() + "] do tipo " + this.currentToken.tag);
-            System.out.println("Esperava-se o token de tipo DECLARE ou BEGIN");
+            System.out.println("Esperava-se o token de tipo INT, FLOAT, STRING_TYPE ou INIT");
             System.exit(1);
         }
 
@@ -740,11 +740,11 @@ public class Analysis {
         if (currentToken.tag == TagEnums.ID) {
             String idName = this.currentToken.toString();
             Variable var = this.variables.get(idName);
-            if (var == null) {
-                System.out.println("linha " + this.currentLine
-                        + ": Erro Semântico - Variável utilizada antes da sua declaração [" + idName + "]");
-                System.exit(1);
-            }
+            // if (var == null) {
+            //     System.out.println("linha " + this.currentLine
+            //             + ": Erro Semântico - Variável utilizada antes da sua declaração [" + idName + "]");
+            //     System.exit(1);
+            // }
             type = var.type;
             if (var.type == 260) {
                 stack_position = this.get_intvar_index(var.getName());
