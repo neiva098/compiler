@@ -27,7 +27,6 @@ public class Analysis {
     private Lexical.Analysis lexical_analyser;
     private Token currentToken;
     private int currentLine;
-    private PrintWriter writer;
     private int ifs_counter, whiles_counter, repeats_counter = 0;
     private String temp_str;
 
@@ -39,7 +38,6 @@ public class Analysis {
     public Analysis(Lexical.Analysis lexical_analyser) throws IOException {
         this.lexical_analyser = lexical_analyser;
         this.currentToken = lexical_analyser.proxyScan();
-        this.writer = new PrintWriter("assembly-code.vm", "UTF-8");
 
         this.variables = new HashMap<>();
         this.int_variables = new ArrayList<>();
@@ -65,7 +63,7 @@ public class Analysis {
             if (this.currentToken.tag == TagEnums.END_OF_FILE) {
                 System.out.println("linha " + this.currentLine
                         + ": Erro Sintático - Fim de arquivo inesperado (simbolo de EOF dentro de algum producao nao completada)");
-                
+
                 System.exit(1);
             } else {
                 System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
@@ -84,19 +82,13 @@ public class Analysis {
         matchToken(TagEnums.CLASS);
         matchToken(TagEnums.ID);
 
-        this.writer.println("START");
-
         procBody();
 
         matchToken(TagEnums.END_OF_FILE);
-
-        this.writer.println("STOP");
-
-        this.writer.close();
     }
 
-    private static boolean isDeclaration(Token t)  throws IOException {
-        int[] values = new int[] { TagEnums.INT, TagEnums.FLOAT, TagEnums.STRING_TYPE, TagEnums.CARACTERE};
+    private static boolean isDeclaration(Token t) throws IOException {
+        int[] values = new int[] { TagEnums.INT, TagEnums.FLOAT, TagEnums.STRING_TYPE, TagEnums.CARACTERE };
 
         return Arrays.stream(values).anyMatch(i -> i == t.tag);
     }
@@ -106,15 +98,14 @@ public class Analysis {
 
         if (Analysis.isDeclaration(currentToken)) {
             procDeclarations();
-        } 
-        
+        }
+
         if (currentToken.tag != TagEnums.INIT) {
             System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
-            + this.currentToken.toString() + "] do tipo " + this.currentToken.tag);
+                    + this.currentToken.toString() + "] do tipo " + this.currentToken.tag);
             System.out.println("Esperava-se o token de tipo DECLARE ou BEGIN");
             System.exit(1);
         }
-
 
         this.currentLine = this.lexical_analyser.getLines();
 
@@ -144,12 +135,6 @@ public class Analysis {
             }
             procDecl();
         }
-
-        if (!this.int_variables.isEmpty())
-            writer.println("PUSHN " + this.int_variables.size());
-
-        for (Float fv : this.float_variables)
-            writer.println("PUSHF 0.0");
     }
 
     private void procDecl() throws IOException {
@@ -162,7 +147,6 @@ public class Analysis {
         ArrayList<String> idList = procIdent_List();
 
         // matchToken(TagEnums.SEMICOLON);
-        
 
         for (String s : idList) {
             if (this.variables.containsKey(s)) {
@@ -231,7 +215,8 @@ public class Analysis {
 
         while (currentToken.tag == TagEnums.SEMICOLON) {
             matchToken(TagEnums.SEMICOLON);
-            if (currentToken.tag == TagEnums.STOP) break;
+            if (currentToken.tag == TagEnums.STOP)
+                break;
             procStmt();
         }
     }
@@ -281,34 +266,12 @@ public class Analysis {
 
     // <assign-stmt> ::= id "=" <simple_expr>
     private void procAssign_Stmt() throws IOException {
-        int stack_position;
         this.currentLine = this.lexical_analyser.getLines();
+
         Variable var = procId();
         matchToken(TagEnums.ASSIGN);
-        int tipo_expr = procSimple_Expr();
+        procSimple_Expr();
 
-        if (var.type == tipo_expr) {
-            // Tipos adequados, operacao de atribuicao com sucesso
-        } else {
-            if (var.type == 261 && tipo_expr == 260) {
-                this.writer.println("ITOF");
-                // Excecao aceita
-            } else {
-                // Erro
-                System.out.println("linha " + this.currentLine + ": Erro Semântico - Atribuição de valor [" + tipo_expr
-                        + "] numa variável do tipo [" + var.type + "]");
-                System.exit(1);
-
-            }
-        }
-        if (var.type == 260) {
-            stack_position = this.get_intvar_index(var.getName());
-            this.writer.println("STOREL " + stack_position);
-        }
-        if (var.type == 261) {
-            stack_position = this.get_floatvar_index(var.getName());
-            this.writer.println("STOREL " + stack_position);
-        }
         if (var.type == 295) {
             for (Char cv : this.char_variables)
                 if (cv.getName().equals(var.getName()))
@@ -321,31 +284,22 @@ public class Analysis {
     private void procIf_Stmt() throws IOException {
         this.currentLine = this.lexical_analyser.getLines();
         this.ifs_counter++;
-        int this_counter = ifs_counter;
-
-        this.writer.println("IF" + this_counter + ":");
 
         matchToken(TagEnums.IF);
+
         procCondition();
 
-        this.writer.println("JZ ELSE" + this_counter);
-
-        // matchToken(TagEnums.THEN);
         procStmt_List();
-
-        this.writer.println("JUMP ENDIF" + this_counter);
-
-        this.writer.println("ELSE" + this_counter + ":");
 
         if (currentToken.tag == TagEnums.ELSE) {
             this.currentLine = this.lexical_analyser.getLines();
             matchToken(TagEnums.ELSE);
             procStmt_List();
         }
-        this.currentLine = this.lexical_analyser.getLines();
-        matchToken(TagEnums.STOP);
 
-        this.writer.println("ENDIF" + this_counter + ":");
+        this.currentLine = this.lexical_analyser.getLines();
+
+        matchToken(TagEnums.STOP);
     }
 
     // <condition> ::= <expression>
@@ -361,12 +315,8 @@ public class Analysis {
 
         matchToken(TagEnums.DO);
 
-        this.writer.println("REPEAT" + this_counter + ":");
-
         procStmt_List();
         procStmt_Suffix();
-        this.writer.println("JZ REPEAT" + this_counter);
-        this.writer.println("ENDREPEAT" + this_counter + ":");
     }
 
     // <stmt-suffix> ::= until <condition>
@@ -382,19 +332,11 @@ public class Analysis {
         this.whiles_counter++;
         int this_counter = ifs_counter;
 
-        this.writer.println("WHILE" + this_counter + ":");
-
         procStmt_Prefix();
-
-        this.writer.println("JZ ENDWHILE" + this_counter);
 
         procStmt_List();
 
-        this.writer.println("JUMP WHILE" + this_counter);
-
         matchToken(TagEnums.STOP);
-
-        this.writer.println("ENDWHILE" + this_counter + ":");
     }
 
     // <stmt-prefix> ::= while <condition> do
@@ -408,23 +350,10 @@ public class Analysis {
     // <read-stmt> ::= in "(" id ")"
     private void procRead_Stmt() throws IOException {
         this.currentLine = this.lexical_analyser.getLines();
-        int stack_position;
+
         matchToken(TagEnums.READ);
         matchToken(TagEnums.OPEN_PAR);
-        Variable var = procId();
         matchToken(TagEnums.CLOSE_PAR);
-        this.writer.println("READ");
-        if (var.type == Types.INT) {
-            this.writer.println("ATOI");
-            stack_position = this.get_intvar_index(var.getName());
-            this.writer.println("STOREL " + stack_position);
-        }
-        if (var.type == Types.FLOAT) {
-            this.writer.println("ATOF");
-            stack_position = this.get_floatvar_index(var.getName());
-            this.writer.println("STOREL " + stack_position);
-        }
-
     }
 
     // <write-stmt> ::= out "(" <writable> ")"
@@ -439,19 +368,8 @@ public class Analysis {
 
     // <writable> ::= <simple-expr> | <literal>
     private void procWritable() throws IOException {
-        int type;
         if (currentToken.tag == TagEnums.ID) {
-            type = procSimple_Expr();
-            if (type == Types.INT)
-                this.writer.println("WRITEI");
-            if (type == Types.FLOAT)
-                this.writer.println("WRITEF");
-            // if (type == Types.BOOLEAN)
-            //     this.writer.println("WRITEI");
-            if (type == Types.CHAR) {
-                this.writer.println("PUSHS \"" + this.temp_str + "\"");
-                this.writer.println("WRITES");
-            }
+            procSimple_Expr();
         } else if (currentToken.tag == TagEnums.STRING_VALUE) {
             procLiteral();
         } else {
@@ -464,89 +382,21 @@ public class Analysis {
 
     // <expression> ::= <simple-expr> [ <relop> <simple-expr> ]
     private int procExpression() throws IOException {
-        int tipo_operando_atual, tipo_novo_operando;
-        int tipo_operacao;
+        int tipo_operando_atual;
 
         tipo_operando_atual = procSimple_Expr();
 
-        if (currentToken.tag == TagEnums.EQ || currentToken.tag == TagEnums.GT
-                || currentToken.tag == TagEnums.GE || currentToken.tag == TagEnums.LT
-                || currentToken.tag == TagEnums.LE || currentToken.tag == TagEnums.NE) {
-
-            if (tipo_operando_atual == Types.CHAR) {
-                System.out.println("linha " + this.currentLine
-                        + ": Erro Semântico - Operador relacional somente pode ser usado com operandos numericos");
-                System.exit(1);
-            }
-
-            tipo_operacao = this.currentToken.tag;
+        if (currentToken.tag == TagEnums.EQ || currentToken.tag == TagEnums.GT || currentToken.tag == TagEnums.GE
+                || currentToken.tag == TagEnums.LT || currentToken.tag == TagEnums.LE
+                || currentToken.tag == TagEnums.NE) {
 
             procRelOp();
 
-            tipo_novo_operando = procSimple_Expr();
-
-            if (tipo_novo_operando == Types.CHAR) {
-                System.out.println("linha " + this.currentLine
-                        + ": Erro Semântico - Operador relacional somente pode ser usado com operandos numéricos");
-                System.exit(1);
-            }
-
-            if (tipo_operando_atual == Types.INT && tipo_novo_operando == Types.INT) {
-                switch (tipo_operacao) {
-                    case TagEnums.EQ:
-                        this.writer.println("EQUAL");
-                        break;
-                    case TagEnums.GT:
-                        this.writer.println("SUP");
-                        break;
-                    case TagEnums.GE:
-                        this.writer.println("SUPEQ");
-                        break;
-                    case TagEnums.LT:
-                        this.writer.println("INF");
-                        break;
-                    case TagEnums.LE:
-                        this.writer.println("INFEQ");
-                        break;
-                    case TagEnums.NE:
-                        this.writer.println("EQUAL");
-                        this.writer.println("NOT");
-                        break;
-                    default:
-                        break;
-                }
-            } else if (tipo_operando_atual == Types.FLOAT && tipo_novo_operando == Types.FLOAT) {
-                switch (tipo_operacao) {
-                    case TagEnums.EQ:
-                        this.writer.println("EQUAL");
-                        break;
-                    case TagEnums.GT:
-                        this.writer.println("FSUP");
-                        break;
-                    case TagEnums.GE:
-                        this.writer.println("FSUPEQ");
-                        break;
-                    case TagEnums.LT:
-                        this.writer.println("FINF");
-                        break;
-                    case TagEnums.LE:
-                        this.writer.println("FINFEQ");
-                        break;
-                    case TagEnums.NE:
-                        this.writer.println("EQUAL");
-                        this.writer.println("NOT");
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                System.out.println("linha " + this.currentLine
-                        + ": Erro Semântico - Operador relacional requer ambos operandos reais ou inteiros");
-                System.exit(1);
-            }
+            procSimple_Expr();
 
             return Types.BOOLEAN;
         }
+
         return tipo_operando_atual;
     }
 
@@ -557,147 +407,29 @@ public class Analysis {
          * INT / INT FLOAT = FLOAT ( + | - | * | / ) INT FLOAT = INT ( + | - | * | / )
          * FLOAT FLOAT = FLOAT ( + | - | * | / ) FLOAT
          */
-        int tipo_operando_atual, tipo_novo_operando;
-        int tipo_operacao;
+        int tipo_operando_atual;
         tipo_operando_atual = procTerm();
 
         while (currentToken.tag == TagEnums.ADD || currentToken.tag == TagEnums.SUB
                 || currentToken.tag == TagEnums.OR) {
-
-            tipo_operacao = this.currentToken.tag;
             procAddOp();
 
-            if (tipo_operacao == TagEnums.OR) {
-                this.writer.println("NOT");
-            }
-
-            tipo_novo_operando = procTerm();
-
-            if (tipo_operacao == TagEnums.ADD || tipo_operacao == TagEnums.SUB) {
-
-                if (tipo_operando_atual == Types.CHAR || tipo_novo_operando == Types.CHAR) {
-                    // Erro
-                    System.out.println("linha " + this.currentLine
-                            + ": Erro Semântico - Valor do tipo CHAR não pode ser usado como operando numa expressão numérica");
-                    System.exit(1);
-                } else if (tipo_operando_atual == Types.BOOLEAN || tipo_novo_operando == Types.BOOLEAN) {
-                    // Erro
-                    System.out.println("linha " + this.currentLine
-                            + ": Erro Semântico - Valor do tipo BOOLEAN não pode ser usado como operando numa expressão numérica");
-                    System.exit(1);
-                } else if (tipo_operando_atual == Types.INT && tipo_novo_operando == Types.INT) {
-                    tipo_operando_atual = Types.INT;
-                    switch (tipo_operacao) {
-                        case TagEnums.ADD:
-                            this.writer.println("ADD");
-                            break;
-                        case TagEnums.SUB:
-                            this.writer.println("SUB");
-                            break;
-                        default:
-                            break;
-                    }
-                } else if (tipo_operando_atual == Types.FLOAT && tipo_novo_operando == Types.FLOAT) {
-                    tipo_operando_atual = Types.FLOAT;
-                    switch (tipo_operacao) {
-                        case TagEnums.ADD:
-                            this.writer.println("FADD");
-                            break;
-                        case TagEnums.SUB:
-                            this.writer.println("FSUB");
-                            break;
-                        default:
-                            break;
-                    }
-                } else {
-                    // Erro
-                    System.out.println("linha " + this.currentLine
-                            + ": Erro Semântico - Ambos operando numéricos precisam inteiros ou reais");
-                    System.exit(1);
-                }
-            } else {
-                if (tipo_operando_atual != Types.BOOLEAN || tipo_novo_operando != Types.BOOLEAN) {
-                    System.out.println("linha " + this.currentLine
-                            + ": Erro Semântico - Operador booleano OR somente pode ser usado com operandos booleanos");
-                    System.exit(1);
-                }
-                this.writer.println("OR");
-            }
-
-            if (tipo_operacao == TagEnums.OR) {
-                this.writer.println("NOT");
-                this.writer.println("MUL");
-                this.writer.println("NOT");
-            }
+            procTerm();
         }
         return tipo_operando_atual;
     }
 
     // <term> ::= <factor-a> { <mulop> <factor-a> }
     private int procTerm() throws IOException {
-        int tipo_operando_atual, tipo_novo_operando;
-        int tipo_operacao;
+        int tipo_operando_atual;
         tipo_operando_atual = procFactor_A();
 
         while (currentToken.tag == TagEnums.MUL || currentToken.tag == TagEnums.DIV
                 || currentToken.tag == TagEnums.AND) {
-
-            tipo_operacao = this.currentToken.tag;
             procMulOp();
 
-            tipo_novo_operando = procFactor_A();
+            procFactor_A();
 
-            if (tipo_operacao == TagEnums.MUL || tipo_operacao == TagEnums.DIV) {
-
-                if (tipo_operando_atual == Types.CHAR || tipo_novo_operando == Types.CHAR) {
-                    // Erro
-                    System.out.println("linha " + this.currentLine
-                            + ": Erro Semântico - Valor do tipo CHAR não pode ser usado como operando numa expressão numérica");
-                    System.exit(1);
-                }
-                if (tipo_operando_atual == Types.BOOLEAN || tipo_novo_operando == Types.BOOLEAN) {
-                    // Erro
-                    System.out.println("linha " + this.currentLine
-                            + ": Erro Semântico - Valor do tipo BOOLEAN não pode ser usado como operando numa expressão numérica");
-                    System.exit(1);
-                } else if (tipo_operando_atual == Types.INT && tipo_novo_operando == Types.INT) {
-                    tipo_operando_atual = Types.INT;
-                    switch (tipo_operacao) {
-                        case TagEnums.MUL:
-                            this.writer.println("MUL");
-                            break;
-                        case TagEnums.DIV:
-                            this.writer.println("DIV");
-                            break;
-                        default:
-                            break;
-                    }
-                } else if (tipo_operando_atual == Types.FLOAT && tipo_novo_operando == Types.FLOAT) {
-                    tipo_operando_atual = Types.FLOAT;
-                    switch (tipo_operacao) {
-                        case TagEnums.MUL:
-                            this.writer.println("FMUL");
-                            break;
-                        case TagEnums.DIV:
-                            this.writer.println("FDIV");
-                            break;
-                        default:
-                            break;
-                    }
-                } else {
-                    // Erro
-                    System.out.println("linha " + this.currentLine
-                            + ": Erro Semântico - Ambos operando numéricos precisam inteiros ou reais");
-                    System.exit(1);
-                }
-            } else {
-                if (tipo_operando_atual != Types.BOOLEAN || tipo_novo_operando != Types.BOOLEAN) {
-                    System.out.println("linha " + this.currentLine
-                            + ": Erro Semântico - Operador booleano AND somente pode ser usado com operandos booleanos");
-                    System.exit(1);
-                }
-                this.writer.println("MUL");
-            }
         }
         return tipo_operando_atual;
     }
@@ -705,30 +437,15 @@ public class Analysis {
     // <factor-a> ::= ["!" | "-"] <factor>
     private int procFactor_A() throws IOException {
         int type;
-        int sinal = currentToken.tag;
+        
         if (currentToken.tag == TagEnums.NOT) {
             matchToken(TagEnums.NOT);
         } else if (currentToken.tag == TagEnums.SUB) {
             matchToken(TagEnums.SUB);
-        } else {
-            // faca nada
         }
 
         type = procFactor();
 
-        if (sinal == TagEnums.NOT) {
-            this.writer.println("NOT");
-        }
-        if (sinal == TagEnums.SUB) {
-            if (type == Types.INT) {
-                this.writer.println("PUSHI -1");
-                this.writer.println("MUL");
-            }
-            if (type == Types.FLOAT) {
-                this.writer.println("PUSHF -1.0");
-                this.writer.println("FMUL");
-            }
-        }
         return type;
     }
 
@@ -740,19 +457,15 @@ public class Analysis {
         if (currentToken.tag == TagEnums.ID) {
             String idName = this.currentToken.toString();
             Variable var = this.variables.get(idName);
-            if (var == null) {
-                System.out.println("linha " + this.currentLine
-                        + ": Erro Semântico - Variável utilizada antes da sua declaração [" + idName + "]");
-                System.exit(1);
-            }
+
             type = var.type;
             if (var.type == 260) {
                 stack_position = this.get_intvar_index(var.getName());
-                this.writer.println("PUSHL " + stack_position);
+                
             }
             if (var.type == 261) {
                 stack_position = this.get_floatvar_index(var.getName());
-                this.writer.println("PUSHL " + stack_position);
+                
             }
             if (var.type == 295)
                 this.temp_str += this.get_charvar_char(var.getName());
@@ -827,10 +540,8 @@ public class Analysis {
                 number += "." + this.currentToken.toString();
                 matchToken(TagEnums.NUM);
 
-                this.writer.println("PUSHF " + number);
                 return type;
             }
-            this.writer.println("PUSHI " + number);
         } else { // char const
             type = 295;
             temp_str += this.currentToken.toString();
@@ -841,9 +552,6 @@ public class Analysis {
 
     // <literal> ::= string
     private void procLiteral() throws IOException {
-        String s = this.currentToken.toString();
-        this.writer.println("PUSHS \"" + s + "\"");
-        this.writer.println("WRITES");
         matchToken(TagEnums.STRING_VALUE);
     }
 
