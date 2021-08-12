@@ -9,9 +9,9 @@ package tokens;
  *
  * @author cristiano
  */
-public class TagEnums {
+public final class TagEnums {
 
-    public static int
+    public static final int
             CLASS = 257,
             INIT = 258,
             STOP = 259,
@@ -55,5 +55,5 @@ public class TagEnums {
             INVALID_TOKEN = 296,
             END_OF_FILE = 297,
             COMMENT = 298,
-            UNEXPECTED_EOF = 299;
-}
+            UNEXPECTED_EOF = 299,
+            BOOLEAN = 300;}

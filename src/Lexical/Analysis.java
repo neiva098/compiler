@@ -202,6 +202,14 @@ public class Analysis {
         return t;
     }
 
+    public Token proxyScan() throws IOException {
+        Token t = this.scan();
+
+        System.out.println(t.toString());
+
+        return t;
+    }
+
     private Token handleEComercial() throws IOException {
         if (this.fileReader.readCh('&'))
             return new Word("&&", TagEnums.AND);

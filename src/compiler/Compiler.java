@@ -5,10 +5,8 @@
  */
 package compiler;
 
-import Lexical.Analysis;
 import Lexical.Reader;
-import tokens.TagEnums;
-import tokens.Token;
+
 /**
  *
  * @author cristiano
@@ -24,20 +22,11 @@ public class Compiler {
         } 
         
         try {
-            Analysis la = new Analysis(new Reader(args[0]));
-            System.out.println("Sequência de caracteres TokenType\n");
-
-            Token lex = la.scan();
-            System.out.println("Token: " + lex.toString() + "\t" + lex.tag);
+            Lexical.Analysis la = new Lexical.Analysis(new Reader(args[0]));
             
-            while(lex.tag != TagEnums.END_OF_FILE) {
-                lex = la.scan();
-                System.out.println("Token: "+ lex.toString() +"\t"+lex.tag);
-            }
-
-            System.out.println("\n\nNumero de linhas é: " + la.getLines() + "\n\n");
-            
-            la.getSt().imprime();
+            Sintatical.Analysis sa = new Sintatical.Analysis(la);
+            sa.program();
+            System.out.println("Fim da análise"); 
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }  
