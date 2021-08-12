@@ -149,11 +149,6 @@ public class Analysis {
         // matchToken(TagEnums.SEMICOLON);
 
         for (String s : idList) {
-            if (this.variables.containsKey(s)) {
-                System.out.println("linha " + this.currentLine
-                        + ": Erro Semântico - Variável não pode ser declarada com o nome de outra \"" + s + "\"");
-                System.exit(1);
-            }
             this.variables.put(s, (new Variable(s, type)));
             switch (type) {
                 case 260:
@@ -256,11 +251,7 @@ public class Analysis {
         String idName = this.currentToken.toString();
         matchToken(TagEnums.ID);
         Variable var = this.variables.get(idName);
-        if (var == null) {
-            System.out.println("linha " + this.currentLine
-                    + ": Erro Semântico - Variável utilizada antes da sua declaração [" + idName + "]");
-            System.exit(1);
-        }
+
         return var;
     }
 
