@@ -23,7 +23,6 @@ import tokens.Token;
  */
 public class Analysis {
     private Lexical.Analysis lexical_analyser;
-    private int currentLine;
     private int ifs_counter, whiles_counter, repeats_counter = 0;
     private String temp_str;
 
@@ -54,12 +53,11 @@ public class Analysis {
         
 
         throw new IOException(
-                "linha " + this.currentLine + ": Erro Sintático: não esperado [" + this.lexical_analyser.getLastToken().toString()
+                "linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado [" + this.lexical_analyser.getLastToken().toString()
                         + "] do tipo " + this.lexical_analyser.getLastToken().tag + "\nToken esperado" + tagToMatch);
     }
 
     public void program() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
 
         eatToken(TagEnums.CLASS);
         eatToken(TagEnums.ID);
@@ -76,32 +74,29 @@ public class Analysis {
     }
 
     private void procBody() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
 
         if (Analysis.isDeclaration(this.lexical_analyser.getLastToken())) {
             procDeclarations();
         }
 
         if (this.lexical_analyser.getLastToken().tag != TagEnums.INIT) {
-            System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
+            System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
                     + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
             System.out.println("Esperava-se o token de tipo INT, FLOAT, STRING ou INIT");
             System.exit(1);
         }
 
-        this.currentLine = this.lexical_analyser.getLines();
 
         eatToken(TagEnums.INIT);
         procStmt_List();
 
-        this.currentLine = this.lexical_analyser.getLines();
 
         if (this.lexical_analyser.getLastToken().tag == TagEnums.STOP) {
             eatToken(TagEnums.STOP);
 
-            this.currentLine = this.lexical_analyser.getLines();
+
         } else {
-            System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
+            System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
                     + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
             System.out.println("Esperava-se o token de tipo SEMICOLON ou END");
             System.exit(1);
@@ -120,7 +115,6 @@ public class Analysis {
     }
 
     private void procDecl() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
 
         int type = procType();
 
@@ -178,7 +172,7 @@ public class Analysis {
                 eatToken(TagEnums.CARACTERE);
                 return 295;
             default:
-                System.out.println("linha " + this.currentLine + ": Erro Sintático -  Lexema não esperado ["
+                System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático -  Lexema não esperado ["
                         + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
                 System.out.println("Esperava-se o token de tipo INT, FLOAT ou CHAR");
                 System.exit(1);
@@ -201,7 +195,6 @@ public class Analysis {
     // <stmt> ::= <assign-stmt> | <if-stmt> | <while-stmt> | <repeat-stmt> |
     // <read-stmt> | <write-stmt>
     private void procStmt() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
         switch (this.lexical_analyser.getLastToken().tag) {
             case 293:
                 procAssign_Stmt();
@@ -222,7 +215,7 @@ public class Analysis {
                 procWrite_Stmt();
                 break;
             default:
-                System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
+                System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
                         + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
                 System.out.println("Esperava-se o token de tipo ID, IF, WHILE, REPEAT, IN ou OUT");
                 System.exit(1);
@@ -239,7 +232,6 @@ public class Analysis {
 
     // <assign-stmt> ::= id "=" <simple_expr>
     private void procAssign_Stmt() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
 
         Variable var = procId();
         eatToken(TagEnums.ASSIGN);
@@ -255,7 +247,6 @@ public class Analysis {
 
     // <if-stmt> ::= if <condition> then <stmt-list> [ else <stmt-list>] end
     private void procIf_Stmt() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
         this.ifs_counter++;
 
         eatToken(TagEnums.IF);
@@ -273,7 +264,7 @@ public class Analysis {
         eatToken(TagEnums.CLOSE_BRA);
 
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ELSE) {
-            this.currentLine = this.lexical_analyser.getLines();
+
             eatToken(TagEnums.ELSE);
 
             eatToken(TagEnums.OPEN_BRA);
@@ -283,7 +274,6 @@ public class Analysis {
             eatToken(TagEnums.CLOSE_BRA);
         }
 
-        this.currentLine = this.lexical_analyser.getLines();
     }
 
     // <condition> ::= <expression>
@@ -293,7 +283,6 @@ public class Analysis {
 
     // <repeat-stmt> ::= repeat <stmt-list> <stmt-suffix>
     private void procRepeat_Stmt() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
         this.repeats_counter++;
         int this_counter = ifs_counter;
 
@@ -307,7 +296,6 @@ public class Analysis {
 
     // <stmt-suffix> ::= until <condition>
     private void procStmt_Suffix() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
         eatToken(TagEnums.WHILE);
         eatToken(TagEnums.OPEN_PAR);
         procCondition();
@@ -316,7 +304,6 @@ public class Analysis {
 
     // <while-stmt> ::= <stmt-prefix> <stmt-list> end
     private void procWhile_Stmt() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
         this.whiles_counter++;
         int this_counter = ifs_counter;
 
@@ -329,7 +316,6 @@ public class Analysis {
 
     // <stmt-prefix> ::= while <condition> do
     private void procStmt_Prefix() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
         eatToken(TagEnums.WHILE);
         procCondition();
         eatToken(TagEnums.DO);
@@ -337,7 +323,6 @@ public class Analysis {
 
     // <read-stmt> ::= in "(" id ")"
     private void procRead_Stmt() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
 
         eatToken(TagEnums.READ);
         eatToken(TagEnums.OPEN_PAR);
@@ -347,7 +332,6 @@ public class Analysis {
 
     // <write-stmt> ::= out "(" <writable> ")"
     private void procWrite_Stmt() throws IOException {
-        this.currentLine = this.lexical_analyser.getLines();
         eatToken(TagEnums.WRITE);
         eatToken(TagEnums.OPEN_PAR);
         procWritable();
@@ -362,7 +346,7 @@ public class Analysis {
         } else if (this.lexical_analyser.getLastToken().tag == TagEnums.STRING_VALUE) {
             procLiteral();
         } else {
-            System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
+            System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
                     + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
             System.out.println("Esperava-se o token de tipo ID ou STRING");
             System.exit(1);
@@ -442,7 +426,7 @@ public class Analysis {
             procExpression();
             eatToken(TagEnums.CLOSE_PAR);
         } else {
-            System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
+            System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
                     + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
             System.out.println("Esperava-se o token de tipo NUM, CARACTERE ou OPEN_PAR");
             System.exit(1);
