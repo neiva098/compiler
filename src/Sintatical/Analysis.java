@@ -171,6 +171,9 @@ public class Analysis {
             case 295:
                 eatToken(TagEnums.CARACTERE);
                 return 295;
+            case 262:
+                eatToken(TagEnums.STRING_TYPE);
+                return 262;
             default:
                 System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático -  Lexema não esperado ["
                         + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
@@ -419,7 +422,9 @@ public class Analysis {
         char ch;
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ID) {
             eatToken(TagEnums.ID);
-        } else if (this.lexical_analyser.getLastToken().tag == TagEnums.NUM || this.lexical_analyser.getLastToken().tag == TagEnums.CARACTERE) {
+        }else if (this.lexical_analyser.getLastToken().tag == TagEnums.STRING_VALUE) {
+            procLiteral(); 
+        }else if (this.lexical_analyser.getLastToken().tag == TagEnums.NUM || this.lexical_analyser.getLastToken().tag == TagEnums.CARACTERE) {
             procConstant();
         } else if (this.lexical_analyser.getLastToken().tag == TagEnums.OPEN_PAR) {
             eatToken(TagEnums.OPEN_PAR);
