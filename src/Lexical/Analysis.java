@@ -210,7 +210,7 @@ public class Analysis {
     public Token proxyScan() throws IOException {
         this.currentToken = this.scan();
 
-        System.out.println(this.currentToken.toString());
+
 
         return this.currentToken;
     }
