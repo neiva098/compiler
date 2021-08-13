@@ -50,7 +50,7 @@ public class Analysis {
 
         throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
                 + this.lexical_analyser.getLastToken().toString() + "] do tipo "
-                + this.lexical_analyser.getLastToken().tag + "\nToken esperado" + tagToMatch);
+                + this.lexical_analyser.getLastToken().tag + "\nToken esperado " + tagToMatch);
     }
 
     public void run() throws IOException {
