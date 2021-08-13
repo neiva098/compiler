@@ -6,6 +6,5 @@ public class Types {
     public static final int
     INT = TagEnums.INT,
     CHAR = TagEnums.CARACTERE,
-    FLOAT = TagEnums.FLOAT,
-    BOOLEAN = TagEnums.BOOLEAN;
+    FLOAT = TagEnums.FLOAT;
 }
