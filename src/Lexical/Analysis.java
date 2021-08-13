@@ -21,6 +21,7 @@ public class Analysis {
     private int line = 1;
     private final Reader fileReader;
     private final Env st;
+    private Token currentToken;
 
     public Analysis(Reader fileReader) {
         this.st = new Env(null);
@@ -203,11 +204,11 @@ public class Analysis {
     }
 
     public Token proxyScan() throws IOException {
-        Token t = this.scan();
+        this.currentToken = this.scan();
 
-        System.out.println(t.toString());
+        System.out.println(this.currentToken.toString());
 
-        return t;
+        return this.currentToken;
     }
 
     private Token handleEComercial() throws IOException {
@@ -281,5 +282,9 @@ public class Analysis {
 
     public int getLines() {
         return this.line;
+    }
+
+    public Token getLastToken() {
+        return this.currentToken;
     }
 }

@@ -1,9 +1,9 @@
-class Teste3
+classe Teste3
 /** Verificando fluxo de controle
 Programa com if e while aninhados **/
 int i;
 int media, soma;
-init
+INIT
     soma = 0;
     write("Quantos dados deseja informar?" );
     read (qtd);
