@@ -23,11 +23,11 @@ import tokens.Token;
  */
 public class Analysis {
     private Lexical.Analysis lexical_analyser;
-    
+
     private String sum_string;
 
     public HashMap<String, Variable> variables;
-    
+
     public ArrayList<Int> int_variables;
     public ArrayList<Float> float_variables;
     public ArrayList<StringVariable> string_variables;
@@ -89,7 +89,7 @@ public class Analysis {
     private void eatDecl_list() throws IOException {
         eatDecl();
 
-        while (this.lexical_analyser.getLastToken().tag == TagEnums.SEMICOLON) {
+        while (this.lexical_analyser.getLastToken().tag == TagEnums.SEMICOLON || this.lexical_analyser.getLastToken().tag  == TagEnums.CLOSE_BRA) {
             eatToken(TagEnums.SEMICOLON);
 
             if (Analysis.isDeclaration(this.lexical_analyser.getLastToken()) == false)
@@ -211,7 +211,7 @@ public class Analysis {
         eatToken(TagEnums.ASSIGN);
         eatSimple_Expr();
 
-        if (var.type == 262)
+        if (var != null && var.type == 262)
             this.setStringValue(var.getName());
 
     }
@@ -239,9 +239,13 @@ public class Analysis {
         eatToken(TagEnums.CLOSE_BRA);
 
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ELSE) {
+
             this.eatElse();
         }
 
+        try {
+            eatStmt();
+        } catch (Exception e) {} 
     }
 
     private void eatElse() throws IOException {

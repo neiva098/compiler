@@ -203,6 +203,10 @@ public class Analysis {
         return t;
     }
 
+    public void setLt(Token t) {
+        this.currentToken = t;
+    }
+
     public Token proxyScan() throws IOException {
         this.currentToken = this.scan();
 
