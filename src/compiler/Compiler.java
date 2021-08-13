@@ -25,7 +25,7 @@ public class Compiler {
             Lexical.Analysis la = new Lexical.Analysis(new Reader(args[0]));
             
             Sintatical.Analysis sa = new Sintatical.Analysis(la);
-            sa.program();
+            sa.run();
             System.out.println("Fim da análise"); 
         } catch (Exception e) {
             System.err.println(e.getMessage());

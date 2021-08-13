@@ -2,18 +2,17 @@ package Variables;
 
 import tokens.TagEnums;
 
-public class Char extends Variable {
-    public char value;
+public class StringVariable extends Variable {
+    public String value;
 
-    public Char(String id) {
+    public StringVariable(String id) {
         super(id, TagEnums.STRING_TYPE);
     }
-
-    public char getValue() {
+    public String getValue() {
         return value;
     }
 
-    public char setValue(char value) {
+    public String setValue(String value) {
         this.value = value;
 
         return this.value;

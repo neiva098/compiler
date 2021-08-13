@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import Variables.Char;
+import Variables.StringVariable;
 import Variables.Float;
 import Variables.Int;
 import Variables.Variable;
@@ -23,13 +23,14 @@ import tokens.Token;
  */
 public class Analysis {
     private Lexical.Analysis lexical_analyser;
-    private int ifs_counter, whiles_counter, repeats_counter = 0;
-    private String temp_str;
+    
+    private String sum_string;
 
     public HashMap<String, Variable> variables;
+    
     public ArrayList<Int> int_variables;
     public ArrayList<Float> float_variables;
-    public ArrayList<Char> char_variables;
+    public ArrayList<StringVariable> string_variables;
 
     public Analysis(Lexical.Analysis lexical_analyser) throws IOException {
         this.lexical_analyser = lexical_analyser;
@@ -38,31 +39,25 @@ public class Analysis {
         this.variables = new HashMap<>();
         this.int_variables = new ArrayList<>();
         this.float_variables = new ArrayList<>();
-        this.char_variables = new ArrayList<>();
+        this.string_variables = new ArrayList<>();
 
-        this.temp_str = "";
-    }
-
-    public Token getCurrent() {
-        return this.lexical_analyser.getLastToken();
+        this.sum_string = "";
     }
 
     public Token eatToken(int tagToMatch) throws IOException {
-        if (tagToMatch == this.lexical_analyser.getLastToken().tag) 
+        if (tagToMatch == this.lexical_analyser.getLastToken().tag)
             return this.lexical_analyser.proxyScan();
-        
 
-        throw new IOException(
-                "linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado [" + this.lexical_analyser.getLastToken().toString()
-                        + "] do tipo " + this.lexical_analyser.getLastToken().tag + "\nToken esperado" + tagToMatch);
+        throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
+                + this.lexical_analyser.getLastToken().toString() + "] do tipo "
+                + this.lexical_analyser.getLastToken().tag + "\nToken esperado" + tagToMatch);
     }
 
-    public void program() throws IOException {
-
+    public void run() throws IOException {
         eatToken(TagEnums.CLASS);
         eatToken(TagEnums.ID);
 
-        procBody();
+        eatBody();
 
         eatToken(TagEnums.END_OF_FILE);
     }
@@ -73,68 +68,53 @@ public class Analysis {
         return Arrays.stream(values).anyMatch(i -> i == t.tag);
     }
 
-    private void procBody() throws IOException {
+    private static boolean isEndStmntList(Token t) throws IOException {
+        int[] values = new int[] { TagEnums.CLOSE_BRA, TagEnums.STOP };
 
+        return Arrays.stream(values).anyMatch(i -> i == t.tag);
+    }
+
+    private void eatBody() throws IOException {
         if (Analysis.isDeclaration(this.lexical_analyser.getLastToken())) {
-            procDeclarations();
+            eatDecl_list();
         }
-
-        if (this.lexical_analyser.getLastToken().tag != TagEnums.INIT) {
-            System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
-                    + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
-            System.out.println("Esperava-se o token de tipo INT, FLOAT, STRING ou INIT");
-            System.exit(1);
-        }
-
 
         eatToken(TagEnums.INIT);
-        procStmt_List();
 
+        eatStmt_List();
 
-        if (this.lexical_analyser.getLastToken().tag == TagEnums.STOP) {
-            eatToken(TagEnums.STOP);
-
-
-        } else {
-            System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
-                    + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
-            System.out.println("Esperava-se o token de tipo SEMICOLON ou END");
-            System.exit(1);
-        }
+        eatToken(TagEnums.STOP);
     }
 
-    private void procDeclarations() throws IOException {
-        procDecl();
+    private void eatDecl_list() throws IOException {
+        eatDecl();
+
         while (this.lexical_analyser.getLastToken().tag == TagEnums.SEMICOLON) {
             eatToken(TagEnums.SEMICOLON);
-            if (Analysis.isDeclaration(this.lexical_analyser.getLastToken()) == false) {
-                break;
-            }
-            procDecl();
+
+            if (Analysis.isDeclaration(this.lexical_analyser.getLastToken()) == false)
+                return;
+
+            eatDecl();
         }
     }
 
-    private void procDecl() throws IOException {
+    private void eatDecl() throws IOException {
+        int type = eatType();
 
-        int type = procType();
-
-        // matchToken(this.lexical_analyser.getLastToken().tag);
-
-        ArrayList<String> idList = procIdent_List();
-
-        // matchToken(TagEnums.SEMICOLON);
+        ArrayList<String> idList = eatIdent_List();
 
         for (String s : idList) {
             this.variables.put(s, (new Variable(s, type)));
             switch (type) {
-                case 260:
+                case TagEnums.INT:
                     this.int_variables.add(new Int(s));
                     break;
-                case 261:
+                case TagEnums.FLOAT:
                     this.float_variables.add(new Float(s));
                     break;
-                case 295:
-                    this.char_variables.add(new Char(s));
+                case TagEnums.STRING_TYPE:
+                    this.string_variables.add(new StringVariable(s));
                     break;
                 default:
                     break;
@@ -143,8 +123,7 @@ public class Analysis {
 
     }
 
-    // <ident-list> ::= id {"," id}
-    private ArrayList<String> procIdent_List() throws IOException {
+    private ArrayList<String> eatIdent_List() throws IOException {
         ArrayList<String> idList = new ArrayList<>();
 
         idList.add(this.lexical_analyser.getLastToken().toString());
@@ -154,364 +133,329 @@ public class Analysis {
             eatToken(TagEnums.COMMA);
 
             idList.add(this.lexical_analyser.getLastToken().toString());
+
             eatToken(TagEnums.ID);
         }
+
         return idList;
     }
 
-    // <type> ::= int | float | char
-    private int procType() throws IOException {
+    private int eatType() throws IOException {
         switch (this.lexical_analyser.getLastToken().tag) {
-            case 260:
+            case TagEnums.INT:
                 eatToken(TagEnums.INT);
-                return 260;
-            case 261:
+                return TagEnums.INT;
+            case TagEnums.FLOAT:
                 eatToken(TagEnums.FLOAT);
-                return 261;
-            case 295:
-                eatToken(TagEnums.CARACTERE);
-                return 295;
-            case 262:
+                return TagEnums.FLOAT;
+            case TagEnums.STRING_TYPE:
                 eatToken(TagEnums.STRING_TYPE);
-                return 262;
+                return TagEnums.STRING_TYPE;
             default:
-                System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático -  Lexema não esperado ["
-                        + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
-                System.out.println("Esperava-se o token de tipo INT, FLOAT ou CHAR");
-                System.exit(1);
-                return 0;
+                throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
+                        + this.lexical_analyser.getLastToken().toString() + "] do tipo "
+                        + this.lexical_analyser.getLastToken().tag + "\nToken esperado  INT, FLOAT ou STRING");
         }
     }
 
-    // <stmt-list> ::= <stmt> {";" <stmt>}
-    private void procStmt_List() throws IOException {
-        procStmt();
+    private void eatStmt_List() throws IOException {
+        eatStmt();
 
         while (this.lexical_analyser.getLastToken().tag == TagEnums.SEMICOLON) {
             eatToken(TagEnums.SEMICOLON);
-            if (this.lexical_analyser.getLastToken().tag == TagEnums.CLOSE_BRA || this.lexical_analyser.getLastToken().tag == TagEnums.STOP)
+
+            if (isEndStmntList(this.lexical_analyser.getLastToken()))
                 break;
-            procStmt();
+
+            eatStmt();
         }
     }
 
-    // <stmt> ::= <assign-stmt> | <if-stmt> | <while-stmt> | <repeat-stmt> |
-    // <read-stmt> | <write-stmt>
-    private void procStmt() throws IOException {
+    private void eatStmt() throws IOException {
         switch (this.lexical_analyser.getLastToken().tag) {
-            case 293:
-                procAssign_Stmt();
+            case TagEnums.ID:
+                eatAssign_Stmt();
                 break;
-            case 263:
-                procIf_Stmt();
+            case TagEnums.IF:
+                eatIF();
                 break;
-            case 268:
-                procWhile_Stmt();
+            case TagEnums.DO:
+                eatDoWhile();
                 break;
-            case 269:
-                procRepeat_Stmt();
+            case TagEnums.READ:
+                eatRead();
                 break;
-            case 270:
-                procRead_Stmt();
-                break;
-            case 271:
-                procWrite_Stmt();
+            case TagEnums.WRITE:
+                eatWrite();
                 break;
             default:
-                System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
-                        + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
-                System.out.println("Esperava-se o token de tipo ID, IF, WHILE, REPEAT, IN ou OUT");
-                System.exit(1);
+                throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
+                        + this.lexical_analyser.getLastToken().toString() + "] do tipo "
+                        + this.lexical_analyser.getLastToken().tag + "\nToken esperado  ID, IF, DO, READ ou WRITE");
         }
     }
 
-    private Variable procId() throws IOException {
+    private Variable eatId() throws IOException {
         String idName = this.lexical_analyser.getLastToken().toString();
+
         eatToken(TagEnums.ID);
+
         Variable var = this.variables.get(idName);
 
         return var;
     }
 
-    // <assign-stmt> ::= id "=" <simple_expr>
-    private void procAssign_Stmt() throws IOException {
+    private void eatAssign_Stmt() throws IOException {
+        Variable var = eatId();
 
-        Variable var = procId();
         eatToken(TagEnums.ASSIGN);
-        procSimple_Expr();
+        eatSimple_Expr();
 
-        if (var.type == 295) {
-            for (Char cv : this.char_variables)
-                if (cv.getName().equals(var.getName()))
-                    cv.value = this.temp_str.charAt(0);
-        }
-        this.temp_str = "";
+        if (var.type == 262)
+            this.setStringValue(var.getName());
+
     }
 
-    // <if-stmt> ::= if <condition> then <stmt-list> [ else <stmt-list>] end
-    private void procIf_Stmt() throws IOException {
-        this.ifs_counter++;
+    private void setStringValue(String id) {
+        for (StringVariable cv : this.string_variables)
+            if (cv.getName().equals(id))
+                cv.value = this.sum_string;
+        this.sum_string = "";
+    }
 
+    private void eatIF() throws IOException {
         eatToken(TagEnums.IF);
 
         eatToken(TagEnums.OPEN_PAR);
 
-        procCondition();
+        eatCondition();
 
         eatToken(TagEnums.CLOSE_PAR);
 
         eatToken(TagEnums.OPEN_BRA);
 
-        procStmt_List();
+        eatStmt_List();
 
         eatToken(TagEnums.CLOSE_BRA);
 
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ELSE) {
-
-            eatToken(TagEnums.ELSE);
-
-            eatToken(TagEnums.OPEN_BRA);
-
-            procStmt_List();
-
-            eatToken(TagEnums.CLOSE_BRA);
+            this.eatElse();
         }
 
     }
 
-    // <condition> ::= <expression>
-    private void procCondition() throws IOException {
-        procExpression();
+    private void eatElse() throws IOException {
+        eatToken(TagEnums.ELSE);
+
+        eatToken(TagEnums.OPEN_BRA);
+
+        eatStmt_List();
+
+        eatToken(TagEnums.CLOSE_BRA);
     }
 
-    // <repeat-stmt> ::= repeat <stmt-list> <stmt-suffix>
-    private void procRepeat_Stmt() throws IOException {
-        this.repeats_counter++;
-        int this_counter = ifs_counter;
+    private void eatCondition() throws IOException {
+        eatExpression();
+    }
 
+    private void eatDoWhile() throws IOException {
         eatToken(TagEnums.DO);
         eatToken(TagEnums.OPEN_BRA);
 
-        procStmt_List();
+        eatStmt_List();
         eatToken(TagEnums.CLOSE_BRA);
-        procStmt_Suffix();
-    }
 
-    // <stmt-suffix> ::= until <condition>
-    private void procStmt_Suffix() throws IOException {
         eatToken(TagEnums.WHILE);
         eatToken(TagEnums.OPEN_PAR);
-        procCondition();
+        eatCondition();
         eatToken(TagEnums.CLOSE_PAR);
     }
 
-    // <while-stmt> ::= <stmt-prefix> <stmt-list> end
-    private void procWhile_Stmt() throws IOException {
-        this.whiles_counter++;
-        int this_counter = ifs_counter;
-
-        procStmt_Prefix();
-
-        procStmt_List();
-
-        eatToken(TagEnums.STOP);
-    }
-
-    // <stmt-prefix> ::= while <condition> do
-    private void procStmt_Prefix() throws IOException {
-        eatToken(TagEnums.WHILE);
-        procCondition();
-        eatToken(TagEnums.DO);
-    }
-
-    // <read-stmt> ::= in "(" id ")"
-    private void procRead_Stmt() throws IOException {
-
+    private void eatRead() throws IOException {
         eatToken(TagEnums.READ);
         eatToken(TagEnums.OPEN_PAR);
-        procId();
+        eatId();
         eatToken(TagEnums.CLOSE_PAR);
     }
 
-    // <write-stmt> ::= out "(" <writable> ")"
-    private void procWrite_Stmt() throws IOException {
+    private void eatWrite() throws IOException {
         eatToken(TagEnums.WRITE);
         eatToken(TagEnums.OPEN_PAR);
-        procWritable();
+        eatWritable();
         eatToken(TagEnums.CLOSE_PAR);
-        this.temp_str = "";
+        this.sum_string = "";
     }
 
-    // <writable> ::= <simple-expr> | <literal>
-    private void procWritable() throws IOException {
+    private void eatWritable() throws IOException {
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ID) {
-            procSimple_Expr();
+            eatSimple_Expr();
         } else if (this.lexical_analyser.getLastToken().tag == TagEnums.STRING_VALUE) {
-            procLiteral();
+            eatLiteral();
         } else {
-            System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
-                    + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
-            System.out.println("Esperava-se o token de tipo ID ou STRING");
-            System.exit(1);
+            throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
+                    + this.lexical_analyser.getLastToken().toString() + "] do tipo "
+                    + this.lexical_analyser.getLastToken().tag + "\nToken esperado  ID ou STRING");
         }
     }
 
-    // <expression> ::= <simple-expr> [ <relop> <simple-expr> ]
-    private void procExpression() throws IOException {
-        procSimple_Expr();
+    private static boolean isRelOp(Token t) throws IOException {
+        int[] values = new int[] { TagEnums.GT, TagEnums.GE, TagEnums.LT, TagEnums.LE, TagEnums.NE, TagEnums.EQ };
 
-        if (this.lexical_analyser.getLastToken().tag == TagEnums.EQ
-                || this.lexical_analyser.getLastToken().tag == TagEnums.GT
-                || this.lexical_analyser.getLastToken().tag == TagEnums.GE
-                || this.lexical_analyser.getLastToken().tag == TagEnums.LT
-                || this.lexical_analyser.getLastToken().tag == TagEnums.LE
-                || this.lexical_analyser.getLastToken().tag == TagEnums.NE) {
+        return Arrays.stream(values).anyMatch(i -> i == t.tag);
+    }
 
-            procRelOp();
+    private void eatExpression() throws IOException {
+        eatSimple_Expr();
 
-            procSimple_Expr();
+        if (isRelOp(this.lexical_analyser.getLastToken())) {
+
+            eatRelOp();
+
+            eatSimple_Expr();
         }
     }
 
-    // <simple-expr> ::= <term> { <addop> <term> }
-    private void procSimple_Expr() throws IOException {
-        /**
-         * É possível termos as expressoes de tipos INT = INT ( + | - | * ) INT FLOAT =
-         * INT / INT FLOAT = FLOAT ( + | - | * | / ) INT FLOAT = INT ( + | - | * | / )
-         * FLOAT FLOAT = FLOAT ( + | - | * | / ) FLOAT
-         */
-        procTerm();
+    private static boolean isSEOp(Token t) throws IOException {
+        int[] values = new int[] { TagEnums.ADD, TagEnums.SUB, TagEnums.OR };
 
-        while (this.lexical_analyser.getLastToken().tag == TagEnums.ADD
-                || this.lexical_analyser.getLastToken().tag == TagEnums.SUB
-                || this.lexical_analyser.getLastToken().tag == TagEnums.OR) {
-            procAddOp();
+        return Arrays.stream(values).anyMatch(i -> i == t.tag);
+    }
 
-            procTerm();
+    private void eatSimple_Expr() throws IOException {
+        eatTerm();
+
+        while (isSEOp(this.lexical_analyser.getLastToken())) {
+            eatAddOp();
+
+            eatTerm();
         }
     }
 
-    // <term> ::= <factor-a> { <mulop> <factor-a> }
-    private void procTerm() throws IOException {
-        procFactor_A();
+    private static boolean isTermOp(Token t) throws IOException {
+        int[] values = new int[] { TagEnums.MUL, TagEnums.DIV, TagEnums.AND };
 
-        while (this.lexical_analyser.getLastToken().tag == TagEnums.MUL
-                || this.lexical_analyser.getLastToken().tag == TagEnums.DIV
-                || this.lexical_analyser.getLastToken().tag == TagEnums.AND) {
-            procMulOp();
+        return Arrays.stream(values).anyMatch(i -> i == t.tag);
+    }
 
-            procFactor_A();
+    private void eatTerm() throws IOException {
+        eatFactor_A();
 
+        while (isTermOp(this.lexical_analyser.getLastToken())) {
+            eatMulOp();
+
+            eatFactor_A();
         }
     }
 
-    // <factor-a> ::= ["!" | "-"] <factor>
-    private void procFactor_A() throws IOException {
+    private void eatFactor_A() throws IOException {
         if (this.lexical_analyser.getLastToken().tag == TagEnums.NOT) {
             eatToken(TagEnums.NOT);
         } else if (this.lexical_analyser.getLastToken().tag == TagEnums.SUB) {
             eatToken(TagEnums.SUB);
         }
 
-        procFactor();
+        eatFactor();
     }
 
-    // <factor> ::= id | <constant> | "(" <expression> ")"
-    private void procFactor() throws IOException {
-        int stack_position;
-        char ch;
+    private void eatFactor() throws IOException {
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ID) {
             eatToken(TagEnums.ID);
-        }else if (this.lexical_analyser.getLastToken().tag == TagEnums.STRING_VALUE) {
-            procLiteral(); 
-        }else if (this.lexical_analyser.getLastToken().tag == TagEnums.NUM || this.lexical_analyser.getLastToken().tag == TagEnums.CARACTERE) {
-            procConstant();
-        } else if (this.lexical_analyser.getLastToken().tag == TagEnums.OPEN_PAR) {
+            return;
+        }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.STRING_VALUE) {
+            eatLiteral();
+            return;
+        }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.NUM
+                || this.lexical_analyser.getLastToken().tag == TagEnums.CARACTERE) {
+            eatConstant();
+            return;
+        }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.OPEN_PAR) {
             eatToken(TagEnums.OPEN_PAR);
-            procExpression();
+            eatExpression();
             eatToken(TagEnums.CLOSE_PAR);
+            return;
         } else {
-            System.out.println("linha " + this.lexical_analyser.getLines() + ": Erro Sintático - Lexema não esperado ["
-                    + this.lexical_analyser.getLastToken().toString() + "] do tipo " + this.lexical_analyser.getLastToken().tag);
-            System.out.println("Esperava-se o token de tipo NUM, CARACTERE ou OPEN_PAR");
-            System.exit(1);
+            throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
+                    + this.lexical_analyser.getLastToken().toString() + "] do tipo "
+                    + this.lexical_analyser.getLastToken().tag + "\nToken esperado  NUM, STR ou OPEN_PAR");
         }
     }
 
-    // <relop> ::= "==" | ">" | ">=" | "<" | "<=" | "!="
-    private void procRelOp() throws IOException {
+    private void eatRelOp() throws IOException {
         if (this.lexical_analyser.getLastToken().tag == TagEnums.EQ) {
             eatToken(TagEnums.EQ);
-        } else if (this.lexical_analyser.getLastToken().tag == TagEnums.GT) {
-            eatToken(TagEnums.GT);
-        } else if (this.lexical_analyser.getLastToken().tag == TagEnums.GE) {
-            eatToken(TagEnums.GE);
-        } else if (this.lexical_analyser.getLastToken().tag == TagEnums.LT) {
-            eatToken(TagEnums.LT);
-        } else if (this.lexical_analyser.getLastToken().tag == TagEnums.LE) {
-            eatToken(TagEnums.LE);
-        } else {
-            eatToken(TagEnums.NE);
+            return;
         }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.GT) {
+            eatToken(TagEnums.GT);
+            return;
+        }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.GE) {
+            eatToken(TagEnums.GE);
+            return;
+        }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.LT) {
+            eatToken(TagEnums.LT);
+            return;
+        }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.LE) {
+            eatToken(TagEnums.LE);
+            return;
+        }
+        eatToken(TagEnums.NE);
+
     }
 
-    // <addop> ::= "+" | "-" | ||
-    private void procAddOp() throws IOException {
+    private void eatAddOp() throws IOException {
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ADD) {
             eatToken(TagEnums.ADD);
-        } else if (this.lexical_analyser.getLastToken().tag == TagEnums.SUB) {
-            eatToken(TagEnums.SUB);
-        } else {
-            eatToken(TagEnums.OR);
+            return;
         }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.SUB) {
+            eatToken(TagEnums.SUB);
+            return;
+        }
+        eatToken(TagEnums.OR);
     }
 
-    // <mulop> ::= "*" | "/" | &&
-    private void procMulOp() throws IOException {
+    private void eatMulOp() throws IOException {
         if (this.lexical_analyser.getLastToken().tag == TagEnums.MUL) {
             eatToken(TagEnums.MUL);
-        } else if (this.lexical_analyser.getLastToken().tag == TagEnums.DIV) {
-            eatToken(TagEnums.DIV);
-        } else {
-            eatToken(TagEnums.AND);
+            return;
         }
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.DIV) {
+            eatToken(TagEnums.DIV);
+            return;
+        }
+        eatToken(TagEnums.AND);
+
     }
 
-    // <constant> ::= num [ "." num ] | caractere
-    private int procConstant() throws IOException {
+    private int eatConstant() throws IOException {
         int type;
-        String number;
-        if (this.lexical_analyser.getLastToken().tag == TagEnums.NUM) { // integer const
+        if (this.lexical_analyser.getLastToken().tag == TagEnums.NUM) {
             type = 260;
-            number = this.lexical_analyser.getLastToken().toString();
             eatToken(TagEnums.NUM);
-            if (this.lexical_analyser.getLastToken().tag == TagEnums.DOT) { // float const
+            if (this.lexical_analyser.getLastToken().tag == TagEnums.DOT) {
                 type = 261;
                 eatToken(TagEnums.DOT);
-                number += "." + this.lexical_analyser.getLastToken().toString();
                 eatToken(TagEnums.NUM);
 
                 return type;
             }
-        } else { // char const
-            type = 295;
-            temp_str += this.lexical_analyser.getLastToken().toString();
-            eatToken(295);
+            return type;
         }
+
+        type = TagEnums.STRING_VALUE;
+        sum_string += this.lexical_analyser.getLastToken().toString();
+        eatToken(TagEnums.STRING_VALUE);
+
         return type;
     }
 
-    // <literal> ::= string
-    private void procLiteral() throws IOException {
+    private void eatLiteral() throws IOException {
         eatToken(TagEnums.STRING_VALUE);
-    }
-
-    public void showError() {
-        if (this.lexical_analyser.getLastToken().tag == TagEnums.UNEXPECTED_EOF) {
-            // imprimir erro 1
-        } else {
-            // imprimir erro 2
-        }
-        System.exit(1);
     }
 }
