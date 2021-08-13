@@ -9,7 +9,7 @@
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}",
-            "args": "tests/test1.txt"
+            "args": "tests/test2.txt"
         },
         {
             "type": "java",
@@ -17,7 +17,7 @@
             "request": "launch",
             "mainClass": "compiler.Compiler",
             "projectName": "compiler_aa0e2d1b",
-            "args": "tests/test1.txt"
+            "args": "tests/test2.txt"
         }
     ]
 }

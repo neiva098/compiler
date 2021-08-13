@@ -55,5 +55,5 @@ public final class TagEnums {
             INVALID_TOKEN = 296,
             END_OF_FILE = 297,
             COMMENT = 298,
-            UNEXPECTED_EOF = 299,
-            BOOLEAN = 300;}
+            UNEXPECTED_EOF = 299;
+}

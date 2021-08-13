@@ -11,5 +11,5 @@ init
     write (b_1);
     b_2 = b + a/2 * (a + 5);
     write("O valor de b2 e: ");
-    write (b2);
+    Write (b2);
 stop

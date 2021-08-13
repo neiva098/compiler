@@ -103,7 +103,7 @@ public class Analysis {
         if (currentToken.tag != TagEnums.INIT) {
             System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
                     + this.currentToken.toString() + "] do tipo " + this.currentToken.tag);
-            System.out.println("Esperava-se o token de tipo DECLARE ou BEGIN");
+            System.out.println("Esperava-se o token de tipo INT, FLOAT, STRING ou INIT");
             System.exit(1);
         }
 
@@ -344,6 +344,7 @@ public class Analysis {
 
         matchToken(TagEnums.READ);
         matchToken(TagEnums.OPEN_PAR);
+        procId();
         matchToken(TagEnums.CLOSE_PAR);
     }
 
@@ -372,10 +373,8 @@ public class Analysis {
     }
 
     // <expression> ::= <simple-expr> [ <relop> <simple-expr> ]
-    private int procExpression() throws IOException {
-        int tipo_operando_atual;
-
-        tipo_operando_atual = procSimple_Expr();
+    private void procExpression() throws IOException {
+        procSimple_Expr();
 
         if (currentToken.tag == TagEnums.EQ || currentToken.tag == TagEnums.GT || currentToken.tag == TagEnums.GE
                 || currentToken.tag == TagEnums.LT || currentToken.tag == TagEnums.LE
@@ -384,22 +383,17 @@ public class Analysis {
             procRelOp();
 
             procSimple_Expr();
-
-            return Types.BOOLEAN;
         }
-
-        return tipo_operando_atual;
     }
 
     // <simple-expr> ::= <term> { <addop> <term> }
-    private int procSimple_Expr() throws IOException {
+    private void procSimple_Expr() throws IOException {
         /**
          * É possível termos as expressoes de tipos INT = INT ( + | - | * ) INT FLOAT =
          * INT / INT FLOAT = FLOAT ( + | - | * | / ) INT FLOAT = INT ( + | - | * | / )
          * FLOAT FLOAT = FLOAT ( + | - | * | / ) FLOAT
          */
-        int tipo_operando_atual;
-        tipo_operando_atual = procTerm();
+        procTerm();
 
         while (currentToken.tag == TagEnums.ADD || currentToken.tag == TagEnums.SUB
                 || currentToken.tag == TagEnums.OR) {
@@ -407,13 +401,11 @@ public class Analysis {
 
             procTerm();
         }
-        return tipo_operando_atual;
     }
 
     // <term> ::= <factor-a> { <mulop> <factor-a> }
-    private int procTerm() throws IOException {
-        int tipo_operando_atual;
-        tipo_operando_atual = procFactor_A();
+    private void procTerm() throws IOException {
+        procFactor_A();
 
         while (currentToken.tag == TagEnums.MUL || currentToken.tag == TagEnums.DIV
                 || currentToken.tag == TagEnums.AND) {
@@ -422,11 +414,10 @@ public class Analysis {
             procFactor_A();
 
         }
-        return tipo_operando_atual;
     }
 
     // <factor-a> ::= ["!" | "-"] <factor>
-    private int procFactor_A() throws IOException {
+    private void procFactor_A() throws IOException {
         int type;
         
         if (currentToken.tag == TagEnums.NOT) {
@@ -435,47 +426,27 @@ public class Analysis {
             matchToken(TagEnums.SUB);
         }
 
-        type = procFactor();
-
-        return type;
+        procFactor();
     }
 
     // <factor> ::= id | <constant> | "(" <expression> ")"
-    private int procFactor() throws IOException {
+    private void procFactor() throws IOException {
         int stack_position;
         char ch;
-        int type;
         if (currentToken.tag == TagEnums.ID) {
-            String idName = this.currentToken.toString();
-            Variable var = this.variables.get(idName);
-
-            type = var.type;
-            if (var.type == 260) {
-                stack_position = this.get_intvar_index(var.getName());
-                
-            }
-            if (var.type == 261) {
-                stack_position = this.get_floatvar_index(var.getName());
-                
-            }
-            if (var.type == 295)
-                this.temp_str += this.get_charvar_char(var.getName());
-
             matchToken(TagEnums.ID);
         } else if (currentToken.tag == TagEnums.NUM || currentToken.tag == TagEnums.CARACTERE) {
-            type = procConstant();
+            procConstant();
         } else if (currentToken.tag == TagEnums.OPEN_PAR) {
             matchToken(TagEnums.OPEN_PAR);
-            type = procExpression();
+            procExpression();
             matchToken(TagEnums.CLOSE_PAR);
         } else {
             System.out.println("linha " + this.currentLine + ": Erro Sintático - Lexema não esperado ["
                     + this.currentToken.toString() + "] do tipo " + this.currentToken.tag);
             System.out.println("Esperava-se o token de tipo NUM, CARACTERE ou OPEN_PAR");
             System.exit(1);
-            return 0;
         }
-        return type;
     }
 
     // <relop> ::= "==" | ">" | ">=" | "<" | "<=" | "!="
