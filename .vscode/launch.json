@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch Compiler",
+            "request": "launch",
+            "mainClass": "compiler.Compiler",
+            "projectName": "compiler_e2595e1b"
+        },
+        {
+            "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}",
