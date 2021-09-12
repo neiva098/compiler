@@ -1,11 +1,11 @@
 class MinhaClasse
-int a, b, c;
 init
+    int a, b, c;
         write("Digite o número a");
         read(a);
         write("Digite o numero b");
         read(b);
-        c = (a * b);
+        c = (a * b)
     write("O resultado é: ");
     write(c);
 stop
