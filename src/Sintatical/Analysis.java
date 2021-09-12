@@ -224,13 +224,38 @@ public class Analysis {
     }
 
     private void eatAssign_Stmt() throws IOException {
+        int stack_position;
         Variable var = eatId();
 
         eatToken(TagEnums.ASSIGN);
-        eatSimple_Expr();
+        int tipo_expr = eatSimple_Expr();
 
         if (var != null && var.type == 262)
             this.setStringValue(var.getName());
+
+        if (var.type != tipo_expr) {
+            if (var.type == Types.FLOAT && tipo_expr == Types.INT) {
+                this.writer.println("ITOF");
+            } else {
+                this.semanticalError(
+                        "Atribuição de valor [" + tipo_expr + "] numa variável do tipo [" + var.type + "]");
+
+            }
+        }
+        if (var.type == Types.INT) {
+            stack_position = this.get_intvar_index(var.getName());
+            this.writer.println("STOREL " + stack_position);
+        }
+        if (var.type == Types.FLOAT) {
+            stack_position = this.get_floatvar_index(var.getName());
+            this.writer.println("STOREL " + stack_position);
+        }
+        if (var.type == Types.STRING) {
+            for (StringVariable cv : this.string_variables)
+                if (cv.getName().equals(var.getName()))
+                    cv.value = this.sum_string;
+        }
+        this.sum_string = "";
 
     }
 
@@ -580,7 +605,7 @@ public class Analysis {
 
     private int eatFactor() throws IOException {
         int stack_position;
-        int tipo_id;
+        int tipo_id = 0;
 
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ID) {
             String idName = this.lexical_analyser.getLastToken().toString();
@@ -612,11 +637,9 @@ public class Analysis {
             tipo_id = eatExpression();
             eatToken(TagEnums.CLOSE_PAR);
             return tipo_id;
-        }
+        } 
 
-        throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
-                + this.lexical_analyser.getLastToken().toString() + "] do tipo "
-                + this.lexical_analyser.getLastToken().tag + "\nToken esperado  NUM, STR ou OPEN_PAR");
+        return tipo_id; 
     }
 
     private void eatRelOp() throws IOException {
