@@ -1,0 +1,22 @@
+START
+PUSHS "Entre com o valor de a: "
+WRITES
+PUSHL 0
+PUSHL 0
+MUL
+STOREL 2
+PUSHS "O valor de b1 e: "
+WRITES
+PUSHL 2
+PUSHL 2
+PUSHL 0
+DIV
+PUSHL 0
+ADD
+MUL
+ADD
+STOREL 3
+PUSHS "O valor de b2 e: "
+WRITES
+PUSHL 3
+STOP
