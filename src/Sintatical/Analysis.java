@@ -6,11 +6,13 @@
 package Sintatical;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
 import Variables.StringVariable;
+import Variables.Types;
 import Variables.Float;
 import Variables.Int;
 import Variables.Variable;
@@ -32,6 +34,8 @@ public class Analysis {
     public ArrayList<Float> float_variables;
     public ArrayList<StringVariable> string_variables;
 
+    private PrintWriter writer;
+
     public Analysis(Lexical.Analysis lexical_analyser) throws IOException {
         this.lexical_analyser = lexical_analyser;
         lexical_analyser.proxyScan();
@@ -40,6 +44,8 @@ public class Analysis {
         this.int_variables = new ArrayList<>();
         this.float_variables = new ArrayList<>();
         this.string_variables = new ArrayList<>();
+
+        this.writer = new PrintWriter("assembly-code.vm", "UTF-8");
 
         this.sum_string = "";
     }
@@ -57,9 +63,14 @@ public class Analysis {
         eatToken(TagEnums.CLASS);
         eatToken(TagEnums.ID);
 
+        this.writer.println("START");
+
         eatBody();
 
         eatToken(TagEnums.END_OF_FILE);
+
+        this.writer.println("STOP");
+        this.writer.close();
     }
 
     private static boolean isDeclaration(Token t) throws IOException {
@@ -89,7 +100,8 @@ public class Analysis {
     private void eatDecl_list() throws IOException {
         eatDecl();
 
-        while (this.lexical_analyser.getLastToken().tag == TagEnums.SEMICOLON || this.lexical_analyser.getLastToken().tag  == TagEnums.CLOSE_BRA) {
+        while (this.lexical_analyser.getLastToken().tag == TagEnums.SEMICOLON
+                || this.lexical_analyser.getLastToken().tag == TagEnums.CLOSE_BRA) {
             eatToken(TagEnums.SEMICOLON);
 
             if (Analysis.isDeclaration(this.lexical_analyser.getLastToken()) == false)
@@ -97,6 +109,12 @@ public class Analysis {
 
             eatDecl();
         }
+
+        if (!this.int_variables.isEmpty())
+            writer.println("PUSHN " + this.int_variables.size());
+
+        for (int i = 0; i < this.float_variables.size(); i++)
+            writer.println("PUSHF 0.0");
     }
 
     private void eatDecl() throws IOException {
@@ -245,7 +263,8 @@ public class Analysis {
 
         try {
             eatStmt();
-        } catch (Exception e) {} 
+        } catch (Exception e) {
+        }
     }
 
     private void eatElse() throws IOException {
@@ -308,15 +327,76 @@ public class Analysis {
         return Arrays.stream(values).anyMatch(i -> i == t.tag);
     }
 
-    private void eatExpression() throws IOException {
-        eatSimple_Expr();
+    private int eatExpression() throws IOException {
+        int tipo_operando_atual, tipo_novo_operando;
+        int tipo_operacao;
+
+        tipo_operando_atual = eatSimple_Expr();
 
         if (isRelOp(this.lexical_analyser.getLastToken())) {
+            if (tipo_operando_atual == Types.STRING)
+                this.semanticalError("Operador relacional somente pode ser usado com operandos numericos");
 
+            tipo_operacao = this.lexical_analyser.getLastToken().tag;
             eatRelOp();
 
-            eatSimple_Expr();
+            tipo_novo_operando = eatSimple_Expr();
+            if (tipo_novo_operando == Types.STRING)
+                this.semanticalError("Operador relacional somente pode ser usado com operandos numericos");
+
+            if (tipo_operando_atual == Types.INT && tipo_novo_operando == Types.INT) {
+                switch (tipo_operacao) {
+                    case TagEnums.EQ:
+                        this.writer.println("EQUAL");
+                        break;
+                    case TagEnums.GT:
+                        this.writer.println("SUP");
+                        break;
+                    case TagEnums.GE:
+                        this.writer.println("SUPEQ");
+                        break;
+                    case TagEnums.LT:
+                        this.writer.println("INF");
+                        break;
+                    case TagEnums.LE:
+                        this.writer.println("INFEQ");
+                        break;
+                    case TagEnums.NE:
+                        this.writer.println("EQUAL");
+                        this.writer.println("NOT");
+                        break;
+                    default:
+                        break;
+                }
+            } else if (tipo_operando_atual == Types.FLOAT && tipo_novo_operando == Types.FLOAT) {
+                switch (tipo_operacao) {
+                    case TagEnums.EQ:
+                        this.writer.println("EQUAL");
+                        break;
+                    case TagEnums.GT:
+                        this.writer.println("FSUP");
+                        break;
+                    case TagEnums.GE:
+                        this.writer.println("FSUPEQ");
+                        break;
+                    case TagEnums.LT:
+                        this.writer.println("FINF");
+                        break;
+                    case TagEnums.LE:
+                        this.writer.println("FINFEQ");
+                        break;
+                    case TagEnums.NE:
+                        this.writer.println("EQUAL");
+                        this.writer.println("NOT");
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                this.semanticalError("Operador relacional requer ambos operandos reais ou inteiros");
+            }
         }
+        return tipo_operando_atual;
     }
 
     private static boolean isSEOp(Token t) throws IOException {
@@ -325,14 +405,64 @@ public class Analysis {
         return Arrays.stream(values).anyMatch(i -> i == t.tag);
     }
 
-    private void eatSimple_Expr() throws IOException {
-        eatTerm();
+    private int eatSimple_Expr() throws IOException {
+        int tipo_operando_atual, tipo_novo_operando;
+        int tipo_operacao;
+        tipo_operando_atual = eatTerm();
 
         while (isSEOp(this.lexical_analyser.getLastToken())) {
+            tipo_operacao = this.lexical_analyser.getLastToken().tag;
             eatAddOp();
 
-            eatTerm();
+            if (tipo_operacao == TagEnums.OR) {
+                this.writer.println("NOT");
+            }
+
+            tipo_novo_operando = eatTerm();
+
+            if (tipo_operacao == TagEnums.ADD || tipo_operacao == TagEnums.SUB) {
+
+                if (tipo_operando_atual == Types.STRING || tipo_novo_operando == Types.STRING) {
+                    this.semanticalError(
+                            "Valor do tipo STRING não pode ser usado como operando numa expressão numérica");
+                }
+
+                if (tipo_operando_atual == Types.INT && tipo_novo_operando == Types.INT) {
+                    tipo_operando_atual = Types.INT;
+                    switch (tipo_operacao) {
+                        case TagEnums.ADD:
+                            this.writer.println("ADD");
+                            break;
+                        case TagEnums.SUB:
+                            this.writer.println("SUB");
+                            break;
+                        default:
+                            break;
+                    }
+                } else if (tipo_operando_atual == Types.FLOAT && tipo_novo_operando == Types.FLOAT) {
+                    tipo_operando_atual = Types.FLOAT;
+                    switch (tipo_operacao) {
+                        case TagEnums.ADD:
+                            this.writer.println("FADD");
+                            break;
+                        case TagEnums.SUB:
+                            this.writer.println("FSUB");
+                            break;
+                        default:
+                            break;
+                    }
+                } else {
+                    this.semanticalError("Ambos operando numéricos precisam inteiros ou reais");
+                }
+            }
+
+            if (tipo_operacao == TagEnums.OR) {
+                this.writer.println("NOT");
+                this.writer.println("MUL");
+                this.writer.println("NOT");
+            }
         }
+        return tipo_operando_atual;
     }
 
     private static boolean isTermOp(Token t) throws IOException {
@@ -341,50 +471,152 @@ public class Analysis {
         return Arrays.stream(values).anyMatch(i -> i == t.tag);
     }
 
-    private void eatTerm() throws IOException {
-        eatFactor_A();
+    private int eatTerm() throws IOException {
+        int tipo_operando_atual, tipo_novo_operando;
+        int tipo_operacao;
+
+        tipo_operando_atual = eatFactor_A();
 
         while (isTermOp(this.lexical_analyser.getLastToken())) {
+            tipo_operacao = this.lexical_analyser.getLastToken().tag;
             eatMulOp();
 
-            eatFactor_A();
+            tipo_novo_operando = eatFactor_A();
+
+            if (tipo_operacao == TagEnums.MUL || tipo_operacao == TagEnums.DIV) {
+
+                if (tipo_operando_atual == Types.STRING || tipo_novo_operando == Types.STRING) {
+                    this.semanticalError(
+                            "Valor do tipo String não pode ser usado como operando numa expressão numérica");
+                }
+
+                if (tipo_operando_atual == Types.INT && tipo_novo_operando == Types.INT) {
+                    tipo_operando_atual = Types.INT;
+                    switch (tipo_operacao) {
+                        case TagEnums.MUL:
+                            this.writer.println("MUL");
+                            break;
+                        case TagEnums.DIV:
+                            this.writer.println("DIV");
+                            break;
+                        default:
+                            break;
+                    }
+                } else if (tipo_operando_atual == TagEnums.FLOAT && tipo_novo_operando == TagEnums.FLOAT) {
+                    tipo_operando_atual = TagEnums.FLOAT;
+                    switch (tipo_operacao) {
+                        case TagEnums.MUL:
+                            this.writer.println("FMUL");
+                            break;
+                        case TagEnums.DIV:
+                            this.writer.println("FDIV");
+                            break;
+                        default:
+                            break;
+                    }
+                } else {
+                    this.semanticalError("Ambos operando numéricos precisam inteiros ou reais");
+                }
+            } else {
+                this.writer.println("MUL");
+            }
         }
+        return tipo_operando_atual;
     }
 
-    private void eatFactor_A() throws IOException {
+    private int eatFactor_A() throws IOException {
+        int tipo_id;
+        int sinal = this.lexical_analyser.getLastToken().tag;
         if (this.lexical_analyser.getLastToken().tag == TagEnums.NOT) {
             eatToken(TagEnums.NOT);
         } else if (this.lexical_analyser.getLastToken().tag == TagEnums.SUB) {
             eatToken(TagEnums.SUB);
         }
 
-        eatFactor();
+        tipo_id = eatFactor();
+
+        if (sinal == TagEnums.NOT) {
+            this.writer.println("NOT");
+        }
+        if (sinal == TagEnums.SUB) {
+            if (tipo_id == Types.INT) {
+                this.writer.println("PUSHI -1");
+                this.writer.println("MUL");
+            }
+            if (tipo_id == Types.FLOAT) {
+                this.writer.println("PUSHF -1.0");
+                this.writer.println("FMUL");
+            }
+        }
+        return tipo_id;
     }
 
-    private void eatFactor() throws IOException {
+    private void semanticalError(String error) throws IOException {
+        throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Semântico - " + error);
+    }
+
+    private int get_intvar_index(String varName) {
+        for (Int iv : this.int_variables)
+            if (iv.getName().equals(varName))
+                return this.int_variables.indexOf(iv);
+        return -1;
+    }
+
+    private int get_floatvar_index(String varName) {
+        for (Float fv : this.float_variables)
+            if (fv.getName().equals(varName))
+                return this.float_variables.indexOf(fv) + this.int_variables.size();
+
+        return -1;
+    }
+
+    private String get_StringVar(String varName) {
+        for (StringVariable cv : this.string_variables)
+            if (cv.getName().equals(varName)) {
+                return cv.value;
+            }
+        return "";
+    }
+
+    private int eatFactor() throws IOException {
+        int stack_position;
+        int tipo_id;
+
         if (this.lexical_analyser.getLastToken().tag == TagEnums.ID) {
+            String idName = this.lexical_analyser.getLastToken().toString();
+            Variable var = this.variables.get(idName);
+            if (var == null)
+                this.semanticalError("Variável utilizada antes da sua declaração [" + idName + "]");
+
+            tipo_id = var.type;
+            if (var.type == Types.INT) {
+                stack_position = this.get_intvar_index(var.getName());
+                this.writer.println("PUSHL " + stack_position);
+            }
+            if (var.type == Types.FLOAT) {
+                stack_position = this.get_floatvar_index(var.getName());
+                this.writer.println("PUSHL " + stack_position);
+            }
+            if (var.type == Types.STRING)
+                this.sum_string += this.get_StringVar(var.getName());
+
             eatToken(TagEnums.ID);
-            return;
         }
-        if (this.lexical_analyser.getLastToken().tag == TagEnums.STRING_VALUE) {
-            eatLiteral();
-            return;
-        }
+
         if (this.lexical_analyser.getLastToken().tag == TagEnums.NUM
-                || this.lexical_analyser.getLastToken().tag == TagEnums.CARACTERE) {
-            eatConstant();
-            return;
+                || this.lexical_analyser.getLastToken().tag == TagEnums.STRING_VALUE) {
+            return eatConstant();
         }
         if (this.lexical_analyser.getLastToken().tag == TagEnums.OPEN_PAR) {
             eatToken(TagEnums.OPEN_PAR);
-            eatExpression();
+            tipo_id = eatExpression();
             eatToken(TagEnums.CLOSE_PAR);
-            return;
-        } else {
-            throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
-                    + this.lexical_analyser.getLastToken().toString() + "] do tipo "
-                    + this.lexical_analyser.getLastToken().tag + "\nToken esperado  NUM, STR ou OPEN_PAR");
+            return tipo_id;
         }
+
+        throw new IOException("linha " + this.lexical_analyser.getLines() + ": Erro Sintático: não esperado ["
+                + this.lexical_analyser.getLastToken().toString() + "] do tipo "
+                + this.lexical_analyser.getLastToken().tag + "\nToken esperado  NUM, STR ou OPEN_PAR");
     }
 
     private void eatRelOp() throws IOException {
@@ -460,6 +692,11 @@ public class Analysis {
     }
 
     private void eatLiteral() throws IOException {
+        String s = this.lexical_analyser.getLastToken().toString();
+
+        this.writer.println("PUSHS \"" + s + "\"");
+        this.writer.println("WRITES");
+
         eatToken(TagEnums.STRING_VALUE);
     }
 }
