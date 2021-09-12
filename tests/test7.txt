@@ -1,5 +1,6 @@
 class MinhaClasse
     string a, b, texto;
+    init
         write("Digite primeira palavra");
         read(a);
         write("Digite segunda palavra");
@@ -7,3 +8,4 @@ class MinhaClasse
         texto = a + " " + b;
     write("O resultado é: ");
     write(c);
+    stop
