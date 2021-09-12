@@ -320,10 +320,23 @@ public class Analysis {
     }
 
     private void eatRead() throws IOException {
+        int stack_position;
         eatToken(TagEnums.READ);
         eatToken(TagEnums.OPEN_PAR);
-        eatId();
+        Variable var = eatId();
         eatToken(TagEnums.CLOSE_PAR);
+
+        this.writer.println("READ");
+        if (var.type == Types.INT) {
+            this.writer.println("ATOI");
+            stack_position = this.get_intvar_index(var.getName());
+            this.writer.println("STOREL " + stack_position);
+        }
+        if (var.type == Types.FLOAT) {
+            this.writer.println("ATOF");
+            stack_position = this.get_floatvar_index(var.getName());
+            this.writer.println("STOREL " + stack_position);
+        }
     }
 
     private void eatWrite() throws IOException {

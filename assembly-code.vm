@@ -1,6 +1,9 @@
 START
 PUSHS "Entre com o valor de a: "
 WRITES
+READ
+ATOI
+STOREL 0
 PUSHL 0
 PUSHL 0
 MUL
