@@ -1,5 +1,5 @@
 class MinhaClasse
-    float a, b, c;
+    float a, b, c, maior;
 init
 
         write("Digite um número");

@@ -227,10 +227,12 @@ public class Analysis {
         int stack_position;
         Variable var = eatId();
 
+        if (var == null) this.semanticalError("Variavel nao declarada");
+
         eatToken(TagEnums.ASSIGN);
         int tipo_expr = eatSimple_Expr();
 
-        if (var != null && var.type == 262)
+        if (var.type == 262)
             this.setStringValue(var.getName());
 
         if (var.type != tipo_expr) {
@@ -460,12 +462,6 @@ public class Analysis {
             tipo_novo_operando = eatTerm();
 
             if (tipo_operacao == TagEnums.ADD || tipo_operacao == TagEnums.SUB) {
-
-                if (tipo_operando_atual == Types.STRING || tipo_novo_operando == Types.STRING) {
-                    this.semanticalError(
-                            "Valor do tipo STRING não pode ser usado como operando numa expressão numérica");
-                }
-
                 if (tipo_operando_atual == Types.INT && tipo_novo_operando == Types.INT) {
                     tipo_operando_atual = Types.INT;
                     switch (tipo_operacao) {
@@ -490,8 +486,6 @@ public class Analysis {
                         default:
                             break;
                     }
-                } else {
-                    this.semanticalError("Ambos operando numéricos precisam inteiros ou reais");
                 }
             }
 
