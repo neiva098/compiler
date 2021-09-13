@@ -327,6 +327,7 @@ public class Analysis {
         eatToken(TagEnums.CLOSE_PAR);
 
         this.writer.println("READ");
+        if (var == null) this.semanticalError("Read variavel não declarada" + this.lexical_analyser.getLastToken().toString());
         if (var.type == Types.INT) {
             this.writer.println("ATOI");
             stack_position = this.get_intvar_index(var.getName());
