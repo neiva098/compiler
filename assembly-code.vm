@@ -1,37 +1,10 @@
 START
-PUSHS "Digite um número"
+PUSHS "Digite primeira palavra"
 WRITES
 READ
-ATOF
-STOREL 0
-PUSHS "Digite outro número: "
+PUSHS "Digite segunda palavra"
 WRITES
 READ
-ATOF
-STOREL 1
-PUSHS "Digite mais um número: "
+PUSHS "O resultado é: "
 WRITES
-READ
-ATOF
-STOREL 2
-ITOF
-STOREL 3
-PUSHL 0
-PUSHL 1
-FSUP
-PUSHL 0
-PUSHL 2
-FSUP
-PUSHL 0
-STOREL 3
-PUSHL 1
-PUSHL 2
-FSUP
-PUSHL 1
-STOREL 3
-PUSHL 2
-STOREL 3
-PUSHS "O maior número é: "
-WRITES
-PUSHL 3
 STOP
